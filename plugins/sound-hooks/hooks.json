@@ -1,61 +1,54 @@
 {
-  "hooks": [
-    {
-      "name": "task-start-notification",
-      "description": "任务创建时发送声音通知",
-      "match": [
-        {
-          "event_type": "tool_use",
-          "tool_name": "TaskCreate"
-        }
-      ],
-      "prompt": "执行通知脚本: {{.rootDir}}/.claude/plugins/sound-hooks/scripts/notify.sh '任务开始: {{.subject}}' 'task_start' '{{.rootDir}}/.claude/plugins/sound-hooks/config.json'"
-    },
-    {
-      "name": "task-complete-notification",
-      "description": "任务完成时发送声音通知",
-      "match": [
-        {
-          "event_type": "tool_use",
-          "tool_name": "TaskUpdate",
-          "status": "completed"
-        }
-      ],
-      "prompt": "执行通知脚本: {{.rootDir}}/.claude/plugins/sound-hooks/scripts/notify.sh '任务完成: {{.subject}}' 'task_complete' '{{.rootDir}}/.claude/plugins/sound-hooks/config.json'"
-    },
-    {
-      "name": "task-in-progress-notification",
-      "description": "任务进行中时发送声音通知",
-      "match": [
-        {
-          "event_type": "tool_use",
-          "tool_name": "TaskUpdate",
-          "status": "in_progress"
-        }
-      ],
-      "prompt": "执行通知脚本: {{.rootDir}}/.claude/plugins/sound-hooks/scripts/notify.sh '任务进行中: {{.subject}}' 'task_in_progress' '{{.rootDir}}/.claude/plugins/sound-hooks/config.json'"
-    },
-    {
-      "name": "command-start-notification",
-      "description": "命令开始时发送声音通知",
-      "match": [
-        {
-          "event_type": "tool_use",
-          "tool_name": "Bash"
-        }
-      ],
-      "prompt": "执行通知脚本: {{.rootDir}}/.claude/plugins/sound-hooks/scripts/notify.sh '执行: {{.description}}' 'command_start' '{{.rootDir}}/.claude/plugins/sound-hooks/config.json'"
-    },
-    {
-      "name": "command-complete-notification",
-      "description": "命令完成时发送声音通知",
-      "match": [
-        {
-          "event_type": "tool_use_completed",
-          "tool_name": "Bash"
-        }
-      ],
-      "prompt": "执行通知脚本: {{.rootDir}}/.claude/plugins/sound-hooks/scripts/notify.sh '命令完成' 'command_complete' '{{.rootDir}}/.claude/plugins/sound-hooks/config.json'"
-    }
-  ]
+  "description": "Sound notification hooks for Claude Code task events",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务开始: {{.subject}}' 'task_start' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "matcher": "TaskCreate"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务进行中: {{.subject}}' 'task_in_progress' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "matcher": "TaskUpdate:in_progress"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务完成: {{.subject}}' 'task_complete' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "matcher": "TaskUpdate:completed"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '执行: {{.description}}' 'command_start' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "matcher": "Bash"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '命令完成' 'command_complete' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "matcher": "Bash"
+          }
+        ]
+      }
+    ]
+  }
 }
