@@ -1,0 +1,37 @@
+{
+  "hooks": [
+    {
+      "name": "git-branch-info",
+      "description": "Show current git branch info on each command",
+      "match": [
+        {
+          "event_type": "tool_use",
+          "tool_name": "Bash"
+        }
+      ],
+      "prompt": "执行: cd {{.rootDir}} && git branch --show-current 2>/dev/null || echo \"not a git repo\""
+    },
+    {
+      "name": "commit-msg-check",
+      "description": "Check commit message format",
+      "match": [
+        {
+          "event_type": "tool_use",
+          "tool_name": "Bash",
+          "match_pattern": "git commit"
+        }
+      ],
+      "prompt": "检查 commit message 是否符合规范（推荐包含 co-authored-by）"
+    },
+    {
+      "name": "project-info",
+      "description": "Show project info summary",
+      "match": [
+        {
+          "event_type": "session_start"
+        }
+      ],
+      "prompt": "执行以下命令获取项目信息: cd {{.rootDir}} && echo \"=== Project Info ===\" && [ -f package.json ] && cat package.json | grep -E '\"(name|version)\"' | head -2; [ -f Cargo.toml ] && cat Cargo.toml | grep -E '^name|^version' | head -2; [ -f pyproject.toml ] && cat pyproject.toml | grep -E '^name|^version' | head -2; echo \"=== Git Status ===\" && git status --short 2>/dev/null | head -5"
+    }
+  ]
+}

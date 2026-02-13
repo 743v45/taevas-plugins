@@ -10,7 +10,7 @@ A collection of plugins for Claude Code with sound notifications and workflow en
 | Plugin | Description | Category |
 |--------|-------------|----------|
 | **sound-hooks** | Sound notification hooks for task events | Notifications |
-| **workflow-helper** | Workflow helper with common utilities | Productivity |
+| **workflow-helper** | Git info and workflow utilities | Productivity |
 
 ## Quick Start
 
