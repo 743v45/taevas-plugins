@@ -52,12 +52,20 @@ Edit `.claude/plugins/sound-hooks/config.json`:
 
 | Sound | Description |
 |-------|-------------|
-| Glass | Glass ping |
-| Ping | Bell ping |
+| Basso | Deep bass sound |
+| Blow | Blowing wind sound |
+| Bottle | Bottle collision |
+| Frog | Frog croak |
+| Funk | Funk groove |
+| Glass | Glass ping (default) |
 | Hero | Hero effect |
-| Tink | Tinkling bell |
-| Basso | Deep bass |
+| Morse | Morse code |
+| Ping | Bell ping |
 | Pop | Pop sound |
+| Purr | Purring sound |
+| Sosumi | System alert |
+| Submarine | Submarine sound |
+| Tink | Tinkling bell |
 
 ## License
 

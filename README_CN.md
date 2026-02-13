@@ -52,12 +52,20 @@ claude plugin install workflow-helper@taevas-plugins
 
 | 声音 | 描述 |
 |------|------|
-| Glass | 玻璃 ping |
-| Ping | 铃声 |
-| Hero | 英雄效 |
-| Tink | 叮铃声 |
 | Basso | 低音 |
+| Blow | 吹气声 |
+| Bottle | 瓶子碰撞 |
+| Frog | 青蛙叫 |
+| Funk | 放克音乐 |
+| Glass | 玻璃声 (默认) |
+| Hero | 英雄效 |
+| Morse | 摩斯电码 |
+| Ping | 铃声 |
 | Pop | 爆音 |
+| Purr | 猫呼噜 |
+| Sosumi | 系统提示 |
+| Submarine | 潜水声 |
+| Tink | 叮铃声 |
 
 ## 许可证
 
