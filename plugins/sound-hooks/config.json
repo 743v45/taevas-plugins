@@ -1,0 +1,26 @@
+{
+  "enabled": true,
+  "notifications": {
+    "enabled": true,
+    "sound": "Glass",
+    "sounds": {
+      "default": "Glass",
+      "task_start": "Ping",
+      "task_complete": "Hero",
+      "task_in_progress": "Pop",
+      "task_error": "Basso",
+      "command_start": "Tink",
+      "command_complete": "Glass"
+    },
+    "log": true,
+    "log_file": ".claude/plugins/sound-hooks/notifications.log"
+  },
+  "stages": {
+    "task_start": true,
+    "task_complete": true,
+    "task_in_progress": true,
+    "task_error": true,
+    "command_start": true,
+    "command_complete": false
+  }
+}

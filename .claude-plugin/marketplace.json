@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "taevas-plugins",
+  "version": "0.1.0",
+  "description": "Taevas Plugins Marketplace - A collection of plugins for Claude Code with sound notifications and workflow enhancements.",
+  "owner": {
+    "name": "743v45",
+    "email": "noreply@743v45.com"
+  },
+  "plugins": [
+    {
+      "name": "sound-hooks",
+      "source": "./plugins/sound-hooks",
+      "category": "notifications",
+      "description": "Sound notification hooks for Claude Code task events. Get audio feedback when tasks are created, completed, or when commands execute."
+    },
+    {
+      "name": "workflow-helper",
+      "source": "./plugins/workflow-helper",
+      "category": "productivity",
+      "description": "Workflow helper plugin with common development tasks and utilities."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "workflow-helper",
+  "description": "Workflow helper plugin with common development tasks and utilities.",
+  "version": "0.1.0",
+  "author": {
+    "name": "743v45"
+  }
+}
