@@ -3,14 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-purple.svg)](https://claude.ai/code)
 
-Claude Code 插件集合，包含声音通知与工作流增强工具。
+Claude Code 声音通知插件。
 
 ## 可用插件
 
 | 插件 | 描述 | 分类 |
 |------|------|------|
 | **sound-hooks** | 任务事件声音通知 | 通知 |
-| **workflow-helper** | Git 信息与工作流工具 | 效率 |
 
 ## 快速开始
 
@@ -20,7 +19,6 @@ claude plugin marketplace add 743v45/taevas-plugins
 
 # 安装插件
 claude plugin install sound-hooks@taevas-plugins
-claude plugin install workflow-helper@taevas-plugins
 ```
 
 ## 声音通知
@@ -61,7 +59,7 @@ claude plugin install workflow-helper@taevas-plugins
 | Hero | 英雄效 |
 | Morse | 摩斯电码 |
 | Ping | 铃声 |
-| Pop | 爆音 |
+| Pop | 爆音爆音 |
 | Purr | 猫呼噜 |
 | Sosumi | 系统提示 |
 | Submarine | 潜水声 |

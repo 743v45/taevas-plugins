@@ -3,14 +3,13 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-compatible-purple.svg)](https://claude.ai/code)
 
-A collection of plugins for Claude Code with sound notifications and workflow enhancements.
+Sound notification hooks for Claude Code.
 
 ## Available Plugins
 
 | Plugin | Description | Category |
 |--------|-------------|----------|
 | **sound-hooks** | Sound notification hooks for task events | Notifications |
-| **workflow-helper** | Git info and workflow utilities | Productivity |
 
 ## Quick Start
 
@@ -18,9 +17,8 @@ A collection of plugins for Claude Code with sound notifications and workflow en
 # Add marketplace
 claude plugin marketplace add 743v45/taevas-plugins
 
-# Install plugins
+# Install plugin
 claude plugin install sound-hooks@taevas-plugins
-claude plugin install workflow-helper@taevas-plugins
 ```
 
 ## Sound Hooks

@@ -1,9 +1,0 @@
-{
-  "name": "workflow-helper",
-  "description": "Workflow helper plugin with git hooks and development utilities.",
-  "version": "0.1.0",
-  "author": {
-    "name": "743v45"
-  },
-  "hooks": "./hooks.json"
-}
