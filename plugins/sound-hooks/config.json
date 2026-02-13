@@ -12,8 +12,7 @@
       "command_start": "Tink",
       "command_complete": "Glass"
     },
-    "log": true,
-    "log_file": ".claude/plugins/sound-hooks/notifications.log"
+    "log": true
   },
   "stages": {
     "task_start": true,

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务开始: {{.subject}}' 'task_start' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '任务开始' task_start",
             "matcher": "TaskCreate"
           }
         ]
@@ -15,25 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务进行中: {{.subject}}' 'task_in_progress' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
-            "matcher": "TaskUpdate:in_progress"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '任务完成: {{.subject}}' 'task_complete' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
-            "matcher": "TaskUpdate:completed"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '执行: {{.description}}' 'command_start' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '命令开始' command_start",
             "matcher": "Bash"
           }
         ]
@@ -44,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/scripts/notify.sh '命令完成' 'command_complete' '{{.rootDir}}/.claude/plugins/marketplaces/taevas-plugins/plugins/sound-hooks/config.json'",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '命令完成' command_complete",
             "matcher": "Bash"
           }
         ]

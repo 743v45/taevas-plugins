@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 # Sound Hooks - Claude Code 通知脚本
-# 用法: ./notify.sh "消息内容" [stage] [config_path]
-# stage: task_start, task_complete, task_in_progress, command_start, command_complete
-# config_path: 配置文件路径 (默认: .claude/plugins/sound-hooks/config.json)
+# 用法: ./notify.sh "消息" [stage]
 
 set -euo pipefail
 
 MESSAGE="${1:-Claude Code 通知}"
 STAGE="${2:-default}"
-CONFIG_PATH="${3:-.claude/plugins/sound-hooks/config.json}"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 # 默认配置
@@ -16,7 +13,7 @@ DEFAULT_ENABLED=true
 DEFAULT_NOTIFY_ENABLED=true
 DEFAULT_SOUND="Glass"
 DEFAULT_LOG=true
-DEFAULT_LOG_FILE=".claude/plugins/sound-hooks/notifications.log"
+DEFAULT_LOG_FILE="${CLAUDE_PLUGIN_ROOT}/notifications.log"
 
 # macOS 可用声音列表
 MAC_SOUNDS=(
@@ -27,7 +24,7 @@ MAC_SOUNDS=(
 
 # 加载配置
 load_config() {
-    local config_file="$1"
+    local config_file="${CLAUDE_PLUGIN_ROOT}/config.json"
 
     if [ ! -f "$config_file" ]; then
         return 1
@@ -39,15 +36,14 @@ load_config() {
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
         sound=$(jq -r ".notifications.sounds.$STAGE // .notifications.sound // \"Glass\"" "$config_file" 2>/dev/null || echo "Glass")
         log=$(jq -r '.notifications.log // true' "$config_file" 2>/dev/null || echo "true")
-        log_file=$(jq -r '.notifications.log_file // ".claude/plugins/sound-hooks/notifications.log"' "$config_file" 2>/dev/null || echo ".claude/plugins/sound-hooks/notifications.log")
+        log_file=$(jq -r '.notifications.log_file // \"${CLAUDE_PLUGIN_ROOT}/notifications.log\"" "$config_file" 2>/dev/null || echo "${CLAUDE_PLUGIN_ROOT}/notifications.log")
         stage_enabled=$(jq -r ".stages.$STAGE // true" "$config_file" 2>/dev/null || echo "true")
     else
-        # 简单的备用方案
         enabled="true"
         notify_enabled="true"
         sound="Glass"
         log="true"
-        log_file=".claude/plugins/sound-hooks/notifications.log"
+        log_file="${CLAUDE_PLUGIN_ROOT}/notifications.log"
         stage_enabled="true"
     fi
 }
@@ -88,6 +84,7 @@ send_notification() {
 
     case "$(uname -s)" in
         Darwin*)    # macOS
+            afplay "/System/Library/Sounds/${snd}.aiff" 2>/dev/null &
             osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
             ;;
         Linux*)
@@ -118,7 +115,7 @@ write_log() {
 # 主逻辑
 main() {
     # 加载配置
-    load_config "$CONFIG_PATH" || {
+    load_config || {
         enabled="$DEFAULT_ENABLED"
         notify_enabled="$DEFAULT_NOTIFY_ENABLED"
         sound="$DEFAULT_SOUND"
