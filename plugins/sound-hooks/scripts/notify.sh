@@ -98,6 +98,7 @@ get_emoji() {
 send_notification() {
     local msg="$1"
     local snd="$2"
+    local is_custom_sound=""
 
     case "$(uname -s)" in
         Darwin*)
@@ -106,6 +107,7 @@ send_notification() {
             if [ -f "$custom_sound" ]; then
                 # 使用 nohup 确保后台进程能继续运行
                 (nohup afplay "$custom_sound" > /dev/null 2>&1 &)
+                is_custom_sound="true"
             else
                 # 使用系统声音
                 local sound_file="/System/Library/Sounds/${snd}.aiff"
@@ -113,7 +115,12 @@ send_notification() {
                     (nohup afplay "$sound_file" > /dev/null 2>&1 &)
                 fi
             fi
-            osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
+            # 只在使用系统声音时设置 sound name，避免自定义声音播放两次
+            if [ "$is_custom_sound" != "true" ]; then
+                osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
+            else
+                osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\"" 2>/dev/null || true
+            fi
             ;;
         Linux*)
             if command -v notify-send &> /dev/null; then
