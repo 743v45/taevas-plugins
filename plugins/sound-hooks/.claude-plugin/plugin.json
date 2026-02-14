@@ -1,27 +1,8 @@
 {
   "name": "sound-hooks",
   "description": "Sound notification hooks for Claude Code task events. Get audio feedback when tasks are created, completed, or when commands execute.",
-  "version": "0.1.0",
   "author": {
     "name": "743v45",
     "email": "noreply@743v45.com"
-  },
-  "repository": "https://github.com/taevas/taevas-plugins",
-  "license": "MIT",
-  "compatibility": {
-    "claude-code": ">=1.0.0"
-  },
-  "hooks": "./hooks.json",
-  "configuration": "./config.json",
-  "scripts": [
-    "./scripts/notify.sh"
-  ],
-  "engines": {
-    "bash": ">=4.0"
-  },
-  "os": [
-    "darwin",
-    "linux",
-    "windows"
-  ]
+  }
 }
