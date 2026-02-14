@@ -2,9 +2,23 @@
   "enabled": true,
   "notifications": {
     "enabled": true,
-    "sound": "Glass",
+    " "sound": "Glass",
     "sounds": {
       "default": "Glass",
+      "SessionStart": "Ping",
+      "UserPromptSubmit": "Tink",
+      "PreToolUse": "Pop",
+      "PermissionRequest": "Basso",
+      "PostToolUse": "Glass",
+      "PostToolUseFailure": "Basso",
+      "Notification": "Tink",
+      "SubagentStart": "Ping",
+      "SubagentStop": "Glass",
+      "Stop": "Hero",
+      "TeammateIdle": "Pop",
+      "TaskCompleted": "Hero",
+      "PreCompact": "Tink",
+      "SessionEnd": "Purr",
       "task_start": "Ping",
       "task_complete": "Hero",
       "task_in_progress": "Pop",
@@ -12,14 +26,29 @@
       "command_start": "Tink",
       "command_complete": "Glass"
     },
-    "log": true
+    "log": true,
+    "log_file": "${CLAUDE_PLUGIN_ROOT}/notifications.log"
   },
   "stages": {
+    "SessionStart": true,
+    "UserPromptSubmit": false,
+    "PreToolUse": false,
+    "PermissionRequest": true,
+    "PostToolUse": false,
+    "PostToolUseFailure": true,
+    "Notification": false,
+    "SubagentStart": true,
+    "SubagentStop": true,
+    "Stop": false,
+    "TeammateIdle": false,
+    "TaskCompleted": true,
+    "PreCompact": false,
+    "SessionEnd": true,
     "task_start": true,
     "task_complete": true,
-    "task_in_progress": true,
+    "task_in_progress": false,
     "task_error": true,
-    "command_start": true,
+    "command_start": false,
     "command_complete": false
   }
 }

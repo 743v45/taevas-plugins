@@ -65,16 +65,30 @@ validate_sound() {
     fi
 }
 
-# 根据阶段选择 emoji
+# 根据事件选择 emoji
 get_emoji() {
     case "$1" in
-        task_start)    echo "🚀" ;;
-        task_complete)  echo "✅" ;;
-        task_in_progress) echo "⏳" ;;
-        task_error)     echo "❌" ;;
-        command_start) echo "⚡" ;;
-        command_complete) echo "⏱️" ;;
-        *)             echo "🔔" ;;
+        SessionStart)        echo "🔄" ;;
+        UserPromptSubmit)    echo "✏️" ;;
+        PreToolUse)         echo "🔧" ;;
+        PermissionRequest)    echo "🔐" ;;
+        PostToolUse)        echo "✓" ;;
+        PostToolUseFailure)  echo "✗" ;;
+        Notification)        echo "📢" ;;
+        SubagentStart)       echo "🤖" ;;
+        SubagentStop)        echo "🛑" ;;
+        Stop)               echo "🏁" ;;
+        TeammateIdle)        echo "💤" ;;
+        TaskCompleted)       echo "🎉" ;;
+        PreCompact)          echo "📦" ;;
+        SessionEnd)          echo "👋" ;;
+        task_start)         echo "🚀" ;;
+        task_complete)       echo "✅" ;;
+        task_in_progress)    echo "⏳" ;;
+        task_error)          echo "❌" ;;
+        command_start)       echo "⚡" ;;
+        command_complete)    echo "⏱️" ;;
+        *)                  echo "🔔" ;;
     esac
 }
 
@@ -84,7 +98,7 @@ send_notification() {
     local snd="$2"
 
     case "$(uname -s)" in
-        Darwin*)    # macOS
+        Darwin*)
             afplay "/System/Library/Sounds/${snd}.aiff" 2>/dev/null &
             osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
             ;;
@@ -93,7 +107,7 @@ send_notification() {
                 notify-send "Claude Code" "$msg" 2>/dev/null || true
             fi
             ;;
-        MINGW*|MSYS*|CYGWIN*)  # Windows
+        MINGW*|MSYS*|CYGWIN*)
             if command -v powershell &> /dev/null; then
                 powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('$msg', 'Claude Code')" 2>/dev/null || true
             fi
