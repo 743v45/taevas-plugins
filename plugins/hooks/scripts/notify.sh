@@ -99,7 +99,12 @@ send_notification() {
 
     case "$(uname -s)" in
         Darwin*)
-            afplay "/System/Library/Sounds/${snd}.aiff" 2>/dev/null &
+            # 先确保声音文件存在
+            local sound_file="/System/Library/Sounds/${snd}.aiff"
+            if [ -f "$sound_file" ]; then
+                # 使用 nohup 确保后台进程能继续运行
+                (nohup afplay "$sound_file" > /dev/null 2>&1 &)
+            fi
             osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
             ;;
         Linux*)

@@ -2,7 +2,7 @@
   "enabled": true,
   "notifications": {
     "enabled": true,
-    " "sound": "Glass",
+    "sound": "Glass",
     "sounds": {
       "default": "Glass",
       "SessionStart": "Ping",
