@@ -59,6 +59,12 @@ validate_sound() {
                 return 0
             fi
         done
+        # 检查是否为自定义音效文件
+        local custom_sound="${CLAUDE_PLUGIN_ROOT}/src/sounds/${sound}.mp3"
+        if [ -f "$custom_sound" ]; then
+            echo "$sound"
+            return 0
+        fi
         echo "Glass"
     else
         echo "$sound"
@@ -99,11 +105,17 @@ send_notification() {
 
     case "$(uname -s)" in
         Darwin*)
-            # 先确保声音文件存在
-            local sound_file="/System/Library/Sounds/${snd}.aiff"
-            if [ -f "$sound_file" ]; then
+            # 先检查是否为自定义音效
+            local custom_sound="${CLAUDE_PLUGIN_ROOT}/src/sounds/${snd}.mp3"
+            if [ -f "$custom_sound" ]; then
                 # 使用 nohup 确保后台进程能继续运行
-                (nohup afplay "$sound_file" > /dev/null 2>&1 &)
+                (nohup afplay "$custom_sound" > /dev/null 2>&1 &)
+            else
+                # 使用系统声音
+                local sound_file="/System/Library/Sounds/${snd}.aiff"
+                if [ -f "$sound_file" ]; then
+                    (nohup afplay "$sound_file" > /dev/null 2>&1 &)
+                fi
             fi
             osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
             ;;
