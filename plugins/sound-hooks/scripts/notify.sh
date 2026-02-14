@@ -4,6 +4,9 @@
 
 set -euo pipefail
 
+# 确定插件根目录，如果环境变量未设置则使用当前目录
+: "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+
 MESSAGE="${1:-Claude Code 通知}"
 STAGE="${2:-default}"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
@@ -12,8 +15,6 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 DEFAULT_ENABLED=true
 DEFAULT_NOTIFY_ENABLED=true
 DEFAULT_SOUND="Glass"
-DEFAULT_LOG=true
-DEFAULT_LOG_FILE="${CLAUDE_PLUGIN_ROOT}/notifications.log"
 
 # macOS 可用声音列表
 MAC_SOUNDS=(
@@ -35,16 +36,11 @@ load_config() {
         enabled=$(jq -r '.enabled // true' "$config_file" 2>/dev/null || echo "true")
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
         sound=$(jq -r '.notifications.sounds."$STAGE" // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
-        log=$(jq -r '.notifications.log // true' "$config_file" 2>/dev/null || echo "true")
-        log_file=$(jq -r '.notifications.log_file // "null"' "$config_file" 2>/dev/null)
-        [ "$log_file" = "null" ] && log_file="${CLAUDE_PLUGIN_ROOT}/notifications.log"
         stage_enabled=$(jq -r ".stages.$STAGE // true" "$config_file" 2>/dev/null || echo "true")
     else
         enabled="true"
         notify_enabled="true"
         sound="Glass"
-        log="true"
-        log_file="${CLAUDE_PLUGIN_ROOT}/notifications.log"
         stage_enabled="true"
     fi
 }
@@ -132,18 +128,6 @@ send_notification() {
     esac
 }
 
-# 写入日志
-write_log() {
-    local log_file="$1"
-    local message="$2"
-    local timestamp="$3"
-    local stage="$4"
-
-    local log_dir="$(dirname "$log_file")"
-    [ ! -d "$log_dir" ] && mkdir -p "$log_dir"
-    echo "[$timestamp] [$stage] $message" >> "$log_file"
-}
-
 # 主逻辑
 main() {
     # 加载配置
@@ -151,8 +135,6 @@ main() {
         enabled="$DEFAULT_ENABLED"
         notify_enabled="$DEFAULT_NOTIFY_ENABLED"
         sound="$DEFAULT_SOUND"
-        log="$DEFAULT_LOG"
-        log_file="$DEFAULT_LOG_FILE"
         stage_enabled="true"
     }
 
@@ -163,11 +145,6 @@ main() {
 
     # 验证声音
     sound=$(validate_sound "$sound")
-
-    # 写入日志
-    if [[ "$log" == "true" ]]; then
-        write_log "$log_file" "$MESSAGE" "$TIMESTAMP" "$STAGE"
-    fi
 
     # 发送通知
     send_notification "$MESSAGE" "$sound"
