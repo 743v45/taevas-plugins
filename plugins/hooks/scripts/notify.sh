@@ -34,9 +34,10 @@ load_config() {
     if command -v jq &> /dev/null; then
         enabled=$(jq -r '.enabled // true' "$config_file" 2>/dev/null || echo "true")
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
-        sound=$(jq -r ".notifications.sounds.$STAGE // .notifications.sound // \"Glass\"" "$config_file" 2>/dev/null || echo "Glass")
+        sound=$(jq -r '.notifications.sounds."$STAGE" // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
         log=$(jq -r '.notifications.log // true' "$config_file" 2>/dev/null || echo "true")
-        log_file=$(jq -r '.notifications.log_file // \"${CLAUDE_PLUGIN_ROOT}/notifications.log\"" "$config_file" 2>/dev/null || echo "${CLAUDE_PLUGIN_ROOT}/notifications.log")
+        log_file=$(jq -r '.notifications.log_file // "null"' "$config_file" 2>/dev/null)
+        [ "$log_file" = "null" ] && log_file="${CLAUDE_PLUGIN_ROOT}/notifications.log"
         stage_enabled=$(jq -r ".stages.$STAGE // true" "$config_file" 2>/dev/null || echo "true")
     else
         enabled="true"
