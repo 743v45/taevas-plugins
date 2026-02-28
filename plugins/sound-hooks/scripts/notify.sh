@@ -16,6 +16,7 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 DEFAULT_ENABLED=true
 DEFAULT_NOTIFY_ENABLED=true
 DEFAULT_SOUND="Glass"
+DEFAULT_LOG_FILE="${CLAUDE_PLUGIN_ROOT}/notifications.log"
 
 # macOS 可用声音列表
 MAC_SOUNDS=(
@@ -24,20 +25,30 @@ MAC_SOUNDS=(
     "Submarine" "Tink"
 )
 
+# 写入日志
+write_log() {
+    local msg="$1"
+    if [[ "$log_enabled" == "true" ]] && [[ -n "$log_file" ]]; then
+        mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
+        echo "[$TIMESTAMP] $msg" >> "$log_file" 2>/dev/null || true
+    fi
+}
+
 # 加载配置
 load_config() {
     local config_file="${CLAUDE_PLUGIN_ROOT}/config.json"
+    local load_error=""
 
     if [ ! -f "$config_file" ]; then
-        return 1
+        load_error="Config file not found: $config_file"
     fi
 
     # 使用 jq 解析 JSON (如果可用)
-    if command -v jq &> /dev/null; then
+    if [ -z "$load_error" ] && command -v jq &> /dev/null; then
         enabled=$(jq -r '.enabled // true' "$config_file" 2>/dev/null || echo "true")
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
-        sound=$(jq -r '.notifications.sounds."$STAGE" // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
-        stage_enabled=$(jq -r ".stages.$STAGE // true" "$config_file" 2>/dev/null || echo "true")
+        sound=$(jq -r --arg stage "$STAGE" '.notifications.sounds[$stage] // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
+        stage_enabled=$(jq -r --arg stage "$STAGE" '.stages[$stage] // true' "$config_file" 2>/dev/null || echo "true")
         log_enabled=$(jq -r '.notifications.log // false' "$config_file" 2>/dev/null || echo "false")
         log_file=$(jq -r '.notifications.log_file // ""' "$config_file" 2>/dev/null || echo "")
     else
@@ -49,9 +60,19 @@ load_config() {
         log_file=""
     fi
 
+    # 如果没有成功加载配置，使用默认日志文件
+    if [ -z "$log_file" ]; then
+        log_file="$DEFAULT_LOG_FILE"
+    fi
+
     # 展开 log_file 中的变量
     if [ -n "$log_file" ]; then
         log_file=$(eval echo "$log_file")
+    fi
+
+    # 记录配置加载错误
+    if [ -n "$load_error" ]; then
+        write_log "[ERROR] Config load failed: $load_error"
     fi
 }
 
@@ -147,15 +168,15 @@ send_notification() {
 
 # 主逻辑
 main() {
-    # 加载配置
-    load_config || {
+    # 加载配置（失败时会使用默认值并记录日志）
+    if ! load_config; then
         enabled="$DEFAULT_ENABLED"
         notify_enabled="$DEFAULT_NOTIFY_ENABLED"
         sound="$DEFAULT_SOUND"
         stage_enabled="true"
         log_enabled="false"
-        log_file=""
-    }
+        log_file="$DEFAULT_LOG_FILE"
+    fi
 
     # 检查是否启用
     if [[ "$enabled" != "true" ]] || [[ "$notify_enabled" != "true" ]] || [[ "$stage_enabled" != "true" ]]; then
@@ -169,12 +190,12 @@ main() {
     send_notification "$MESSAGE" "$sound"
 
     # 输出到 stdout
-    echo "[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE"
+    local log_msg="[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE"
+    echo "$log_msg"
 
     # 写入日志文件
     if [[ "$log_enabled" == "true" ]] && [[ -n "$log_file" ]]; then
-        mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
-        echo "[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE" >> "$log_file" || true
+        write_log "$(get_emoji $STAGE) [$STAGE] $MESSAGE"
     fi
 }
 
