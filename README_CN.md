@@ -19,6 +19,9 @@ claude plugin marketplace add 743v45/taevas-plugins
 
 # 安装插件
 claude plugin install sound-hooks@taevas-plugins
+
+# 更新插件
+claude plugin update sound-hooks@taevas-plugins
 ```
 
 ## 声音通知
