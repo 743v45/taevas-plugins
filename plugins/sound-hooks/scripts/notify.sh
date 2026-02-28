@@ -46,14 +46,15 @@ load_config() {
     fi
 
     # 使用 jq 解析 JSON (如果可用)
+    # 注意：使用 has() 检查路径是否存在，避免 // 将 false 当作假值处理
     if [ -z "$load_error" ] && command -v jq &> /dev/null; then
-        enabled=$(jq -r '.enabled // true' "$config_file" 2>/dev/null || echo "true")
-        notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
-        show_enabled=$(jq -r --arg stage "$STAGE" '.notifications.show[$stage] // true' "$config_file" 2>/dev/null || echo "true")
-        sound=$(jq -r --arg stage "$STAGE" '.notifications.sounds[$stage] // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
-        sound_enabled=$(jq -r --arg stage "$STAGE" '.sounds[$stage] // true' "$config_file" 2>/dev/null || echo "true")
-        log_enabled=$(jq -r '.notifications.log // false' "$config_file" 2>/dev/null || echo "false")
-        log_file=$(jq -r '.notifications.log_file // ""' "$config_file" 2>/dev/null || echo "")
+        enabled=$(jq -r '.enabled? // true' "$config_file" 2>/dev/null || echo "true")
+        notify_enabled=$(jq -r '.notifications.enabled? // true' "$config_file" 2>/dev/null || echo "true")
+        show_enabled=$(jq -r --arg stage "$STAGE" 'if .notifications.show | has($stage) then .notifications.show[$stage] else true end' "$config_file" 2>/dev/null || echo "true")
+        sound=$(jq -r --arg stage "$STAGE" '.notifications.sounds[$stage]? // .notifications.sound? // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
+        sound_enabled=$(jq -r --arg stage "$STAGE" 'if .sounds | has($stage) then .sounds[$stage] else true end' "$config_file" 2>/dev/null || echo "true")
+        log_enabled=$(jq -r '.notifications.log? // false' "$config_file" 2>/dev/null || echo "false")
+        log_file=$(jq -r '.notifications.log_file? // ""' "$config_file" 2>/dev/null || echo "")
     else
         enabled="true"
         notify_enabled="true"
