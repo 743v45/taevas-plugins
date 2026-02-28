@@ -1,26 +1,26 @@
-# Sound Hooks
+# 声音通知 (Sound Hooks)
 
-Sound notification hooks for Claude Code task events. Get audio feedback when tasks are created, completed, or when commands execute.
+为 Claude Code 任务事件提供声音通知。在任务创建、完成或命令执行时获得音频反馈。
 
-## Features
+## 功能特性
 
-- **Task Notifications**: Sound alerts when tasks start, complete, or are in progress
-- **Command Notifications**: Sound alerts when bash commands execute
-- **Customizable Sounds**: Choose different sounds for different event types
-- **Cross-Platform**: Works on macOS, Linux, and Windows
-- **Logging**: Optional notification logging
+- **任务通知**：任务开始、进行中、完成时播放声音提示
+- **命令通知**：执行 bash 命令时播放声音提示
+- **自定义声音**：为不同事件类型选择不同声音
+- **跨平台**：支持 macOS、Linux 和 Windows
+- **日志记录**：可选的通知日志
 
-## Installation
+## 安装
 
 ```bash
 # 从 marketplace 安装
-claude plugin marketplace add taevas-org/taevas-plugins
+claude plugin marketplace add 743v45/taevas-plugins
 claude plugin install sound-hooks@taevas-plugins
 ```
 
-## Configuration
+## 配置
 
-Edit `.claude/plugins/sound-hooks/config.json`:
+编辑 `.claude/plugins/sound-hooks/config.json`：
 
 ```json
 {
@@ -48,48 +48,59 @@ Edit `.claude/plugins/sound-hooks/config.json`:
 }
 ```
 
-## Available Sounds (macOS)
+### 配置说明
 
-| Sound | Description |
-|-------|-------------|
-| Basso | Deep bass |
-| Blow | Blowing sound |
-| Bottle | Bottle sound |
-| Frog | Frog croak |
-| Funk | Funk groove |
-| Glass | Glass ping (default) |
-| Hero | Hero effect |
-| Morse | Morse code |
-| Ping | Bell ping |
-| Pop | Pop sound |
-| Purr | Purring |
-| Sosumi | System alert |
-| Submarine | Underwater |
-| Tink | Tinkling bell |
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `enabled` | boolean | 总开关 |
+| `notifications.enabled` | boolean | 通知开关 |
+| `notifications.sound` | string | 默认声音名称 |
+| `notifications.sounds` | object | 各事件的声音映射 |
+| `notifications.log` | boolean | 是否记录日志 |
+| `stages` | object | 各事件是否启用 |
 
-## Events
+## 可用声音 (macOS)
 
-| Event | Description |
-|-------|-------------|
-| `task_start` | When a new task is created |
-| `task_complete` | When a task is marked completed |
-| `task_in_progress` | When a task starts being worked on |
-| `task_error` | When a task encounters an error |
-| `command_start` | When a bash command is executed |
-| `command_complete` | When a bash command finishes |
+| 声音 | 描述 |
+|------|------|
+| Basso | 低音 |
+| Blow | 吹气声 |
+| Bottle | 瓶子碰撞 |
+| Frog | 青蛙叫 |
+| Funk | 放克音乐 |
+| Glass | 玻璃声 (默认) |
+| Hero | 英雄效果 |
+| Morse | 摩斯电码 |
+| Ping | 铃声 |
+| Pop | 爆音 |
+| Purr | 猫呼噜 |
+| Sosumi | 系统提示 |
+| Submarine | 潜水声 |
+| Tink | 叮铃声 |
 
-## Manual Installation
+## 事件
 
-If you want to install manually:
+| 事件 | 说明 |
+|------|------|
+| `task_start` | 创建新任务时 |
+| `task_complete` | 任务标记完成时 |
+| `task_in_progress` | 开始执行任务时 |
+| `task_error` | 任务遇到错误时 |
+| `command_start` | 执行 bash 命令时 |
+| `command_complete` | bash 命令完成时 |
 
-1. Copy the plugin files:
+## 手动安装
+
+如果需要手动安装：
+
+1. 复制插件文件：
 ```bash
 mkdir -p .claude/plugins/sound-hooks/scripts
 cp scripts/notify.sh .claude/plugins/sound-hooks/scripts/
 cp config.json .claude/plugins/sound-hooks/
 ```
 
-2. Add hooks to your `.claude/hooks.json`:
+2. 在 `.claude/hooks.json` 中添加 hooks：
 ```json
 {
   "hooks": [
