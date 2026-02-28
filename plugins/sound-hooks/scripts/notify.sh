@@ -38,11 +38,20 @@ load_config() {
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
         sound=$(jq -r '.notifications.sounds."$STAGE" // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
         stage_enabled=$(jq -r ".stages.$STAGE // true" "$config_file" 2>/dev/null || echo "true")
+        log_enabled=$(jq -r '.notifications.log // false' "$config_file" 2>/dev/null || echo "false")
+        log_file=$(jq -r '.notifications.log_file // ""' "$config_file" 2>/dev/null || echo "")
     else
         enabled="true"
         notify_enabled="true"
         sound="Glass"
         stage_enabled="true"
+        log_enabled="false"
+        log_file=""
+    fi
+
+    # 展开 log_file 中的变量
+    if [ -n "$log_file" ]; then
+        log_file=$(eval echo "$log_file")
     fi
 }
 
@@ -144,6 +153,8 @@ main() {
         notify_enabled="$DEFAULT_NOTIFY_ENABLED"
         sound="$DEFAULT_SOUND"
         stage_enabled="true"
+        log_enabled="false"
+        log_file=""
     }
 
     # 检查是否启用
@@ -159,6 +170,12 @@ main() {
 
     # 输出到 stdout
     echo "[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE"
+
+    # 写入日志文件
+    if [[ "$log_enabled" == "true" ]] && [[ -n "$log_file" ]]; then
+        mkdir -p "$(dirname "$log_file")" 2>/dev/null || true
+        echo "[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE" >> "$log_file" || true
+    fi
 }
 
 main "$@"
