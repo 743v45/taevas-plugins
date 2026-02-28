@@ -5,7 +5,8 @@
 set -euo pipefail
 
 # 确定插件根目录，如果环境变量未设置则使用当前目录
-: "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
+# 从 scripts/ 目录向上一级到达插件根目录
+: "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 MESSAGE="${1:-Claude Code 通知}"
 STAGE="${2:-default}"
