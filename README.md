@@ -21,7 +21,7 @@ claude plugin marketplace add 743v45/taevas-plugins
 claude plugin install sound-hooks@taevas-plugins
 
 # Update plugin
-claude plugin update sound-hooks@taevas-plugins
+claude plugin marketplace update taevas-plugins && claude plugin update sound-hooks@taevas-plugins
 ```
 
 ## Sound Hooks
