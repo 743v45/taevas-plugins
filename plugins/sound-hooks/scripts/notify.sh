@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 # Sound Hooks - Claude Code 通知脚本
-# 用法: ./notify.sh "消息" [stage]
+# 用法: ./notify.sh [event_name]
 
 set -euo pipefail
 
-# 确定插件根目录，如果环境变量未设置则使用当前目录
-# 从 scripts/ 目录向上一级到达插件根目录
+# 确定插件根目录
 : "${CLAUDE_PLUGIN_ROOT:=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
-MESSAGE="${1:-Claude Code 通知}"
-STAGE="${2:-default}"
+EVENT="${1:-}"
+STAGE="$EVENT"
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 
 # 默认配置
 DEFAULT_ENABLED=true
-DEFAULT_NOTIFY_ENABLED=true
-DEFAULT_SHOW_ENABLED=true
+DEFAULT_EVENT_ENABLED=true
+DEFAULT_NOTIFICATION=true
 DEFAULT_SOUND_ENABLED=true
 DEFAULT_SOUND="Glass"
+DEFAULT_MESSAGE="Claude Code 通知"
 DEFAULT_LOG_FILE="${CLAUDE_PLUGIN_ROOT}/notifications.log"
 
 # macOS 可用声音列表
@@ -45,24 +45,20 @@ load_config() {
         load_error="Config file not found: $config_file"
     fi
 
-    # 使用 jq 解析 JSON (如果可用)
-    # 注意：使用 has() 检查路径是否存在，避免 // 将 false 当作假值处理
+    # 加载顶层配置
     if [ -z "$load_error" ] && command -v jq &> /dev/null; then
         enabled=$(jq -r '.enabled? // true' "$config_file" 2>/dev/null || echo "true")
-        notify_enabled=$(jq -r '.notifications.enabled? // true' "$config_file" 2>/dev/null || echo "true")
-        show_enabled=$(jq -r --arg stage "$STAGE" 'if .notifications.show | has($stage) then .notifications.show[$stage] else true end' "$config_file" 2>/dev/null || echo "true")
-        sound=$(jq -r --arg stage "$STAGE" '.notifications.sounds[$stage]? // .notifications.sound? // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
-        sound_enabled=$(jq -r --arg stage "$STAGE" 'if .sounds | has($stage) then .sounds[$stage] else true end' "$config_file" 2>/dev/null || echo "true")
-        log_enabled=$(jq -r '.notifications.log? // false' "$config_file" 2>/dev/null || echo "false")
-        log_file=$(jq -r '.notifications.log_file? // ""' "$config_file" 2>/dev/null || echo "")
+        log_enabled=$(jq -r '.log? // false' "$config_file" 2>/dev/null || echo "false")
+        log_file=$(jq -r '.log_file? // ""' "$config_file" 2>/dev/null || echo "")
     else
-        enabled="true"
-        notify_enabled="true"
-        show_enabled="true"
-        sound="Glass"
-        sound_enabled="true"
+        enabled="$DEFAULT_ENABLED"
         log_enabled="false"
         log_file=""
+    fi
+
+    # 展开日志文件路径中的变量
+    if [ -n "$log_file" ]; then
+        log_file=$(eval echo "$log_file")
     fi
 
     # 如果没有成功加载配置，使用默认日志文件
@@ -70,14 +66,36 @@ load_config() {
         log_file="$DEFAULT_LOG_FILE"
     fi
 
-    # 展开 log_file 中的变量
-    if [ -n "$log_file" ]; then
-        log_file=$(eval echo "$log_file")
+    # 如果没有指定事件，使用默认值
+    if [ -z "$EVENT" ]; then
+        event_enabled="$DEFAULT_EVENT_ENABLED"
+        notification="$DEFAULT_NOTIFICATION"
+        sound="$DEFAULT_SOUND"
+        sound_enabled="$DEFAULT_SOUND_ENABLED"
+        message="$DEFAULT_MESSAGE"
+        return 0
+    fi
+
+    # 加载事件级配置
+    if [ -z "$load_error" ] && command -v jq &> /dev/null; then
+        event_enabled=$(jq -r --arg event "$EVENT" 'if .events[$event] | has("enabled") then .events[$event].enabled else true end' "$config_file" 2>/dev/null || echo "true")
+        notification=$(jq -r --arg event "$EVENT" 'if .events[$event] | has("notification") then .events[$event].notification else true end' "$config_file" 2>/dev/null || echo "true")
+        sound=$(jq -r --arg event "$EVENT" 'if .events[$event] | has("sound") then .events[$event].sound else "Glass" end' "$config_file" 2>/dev/null || echo "Glass")
+        # 只有当事件配置存在且 sound 明确设为空字符串时才禁用声音
+        sound_enabled=$(jq -r --arg event "$EVENT" 'if .events[$event] != null and (.events[$event].sound // "") == "" then false else true end' "$config_file" 2>/dev/null || echo "true")
+        message=$(jq -r --arg event "$EVENT" 'if .events[$event] | has("message") then .events[$event].message else "Claude Code 通知" end' "$config_file" 2>/dev/null || echo "Claude Code 通知")
+    else
+        event_enabled="$DEFAULT_EVENT_ENABLED"
+        notification="$DEFAULT_NOTIFICATION"
+        sound="$DEFAULT_SOUND"
+        sound_enabled="$DEFAULT_SOUND_ENABLED"
+        message="$DEFAULT_MESSAGE"
     fi
 
     # 记录配置加载错误
     if [ -n "$load_error" ]; then
         write_log "[ERROR] Config load failed: $load_error"
+        return 1
     fi
 }
 
@@ -108,25 +126,19 @@ get_emoji() {
     case "$1" in
         SessionStart)        echo "🔄" ;;
         UserPromptSubmit)    echo "✏️" ;;
-        PreToolUse)         echo "🔧" ;;
-        PermissionRequest)    echo "🔐" ;;
-        PostToolUse)        echo "✓" ;;
+        PreToolUse)          echo "🔧" ;;
+        PermissionRequest)   echo "🔐" ;;
+        PostToolUse)         echo "✓" ;;
         PostToolUseFailure)  echo "✗" ;;
         Notification)        echo "📢" ;;
         SubagentStart)       echo "🤖" ;;
         SubagentStop)        echo "🛑" ;;
-        Stop)               echo "🏁" ;;
+        Stop)                echo "🏁" ;;
         TeammateIdle)        echo "💤" ;;
         TaskCompleted)       echo "🎉" ;;
         PreCompact)          echo "📦" ;;
         SessionEnd)          echo "👋" ;;
-        task_start)         echo "🚀" ;;
-        task_complete)       echo "✅" ;;
-        task_in_progress)    echo "⏳" ;;
-        task_error)          echo "❌" ;;
-        command_start)       echo "⚡" ;;
-        command_complete)    echo "⏱️" ;;
-        *)                  echo "🔔" ;;
+        *)                   echo "🔔" ;;
     esac
 }
 
@@ -136,13 +148,15 @@ send_notification() {
     local snd="$2"
     local show_notification="${3:-true}"
     local with_sound="${4:-true}"
-    local is_custom_sound=""
 
     case "$(uname -s)" in
         Darwin*)
-            # 显示通知
+            # 显示通知（转义特殊字符避免 shell 注入）
             if [ "$show_notification" == "true" ]; then
-                osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\"" 2>/dev/null || true
+                local title="$(get_emoji $STAGE) Claude Code"
+                local escaped_msg=$(printf '%s' "$msg" | sed 's/\\/\\\\/g; s/"/\\"/g')
+                local escaped_title=$(printf '%s' "$title" | sed 's/\\/\\\\/g; s/"/\\"/g')
+                osascript -e "display notification \"$escaped_msg\" with title \"$escaped_title\"" 2>/dev/null || true
             fi
             # 播放声音
             if [ "$with_sound" == "true" ]; then
@@ -172,40 +186,41 @@ send_notification() {
 
 # 主逻辑
 main() {
-    # 加载配置（失败时会使用默认值并记录日志）
+    # 加载配置
     if ! load_config; then
         enabled="$DEFAULT_ENABLED"
-        notify_enabled="$DEFAULT_NOTIFY_ENABLED"
-        show_enabled="$DEFAULT_SHOW_ENABLED"
+        event_enabled="$DEFAULT_EVENT_ENABLED"
+        notification="$DEFAULT_NOTIFICATION"
         sound="$DEFAULT_SOUND"
         sound_enabled="$DEFAULT_SOUND_ENABLED"
+        message="$DEFAULT_MESSAGE"
         log_enabled="false"
         log_file="$DEFAULT_LOG_FILE"
     fi
 
     # 检查是否启用
-    if [[ "$enabled" != "true" ]] || [[ "$notify_enabled" != "true" ]]; then
+    if [[ "$enabled" != "true" ]] || [[ "$event_enabled" != "true" ]]; then
         exit 0
     fi
 
     # 如果不显示通知也不播放声音，则退出
-    if [[ "$show_enabled" != "true" ]] && [[ "$sound_enabled" != "true" ]]; then
+    if [[ "$notification" != "true" ]] && [[ "$sound_enabled" != "true" ]]; then
         exit 0
     fi
 
     # 验证声音
     sound=$(validate_sound "$sound")
 
-    # 发送通知（分别控制通知显示和声音播放）
-    send_notification "$MESSAGE" "$sound" "$show_enabled" "$sound_enabled"
+    # 发送通知
+    send_notification "$message" "$sound" "$notification" "$sound_enabled"
 
     # 输出到 stdout
-    local log_msg="[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE"
+    local log_msg="[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $message"
     echo "$log_msg"
 
     # 写入日志文件
     if [[ "$log_enabled" == "true" ]] && [[ -n "$log_file" ]]; then
-        write_log "$(get_emoji $STAGE) [$STAGE] $MESSAGE"
+        write_log "$(get_emoji $STAGE) [$STAGE] $message"
     fi
 }
 

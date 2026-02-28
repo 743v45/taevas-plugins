@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '会话开始' SessionStart"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh SessionStart"
           }
         ]
       }
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '提交提示' UserPromptSubmit"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh UserPromptSubmit"
           }
         ]
       }
@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '工具执行中' PreToolUse"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh PreToolUse"
           }
         ]
       }
@@ -36,7 +36,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '请求权限' PermissionRequest"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh PermissionRequest"
           }
         ]
       }
@@ -46,7 +46,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '工具执行成功' PostToolUse"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh PostToolUse"
           }
         ]
       }
@@ -56,7 +56,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '工具执行失败' PostToolUseFailure"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh PostToolUseFailure"
           }
         ]
       }
@@ -66,7 +66,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '收到通知' Notification"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh Notification"
           }
         ]
       }
@@ -76,7 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '子代理启动' SubagentStart"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh SubagentStart"
           }
         ]
       }
@@ -86,7 +86,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '子代理停止' SubagentStop"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh SubagentStop"
           }
         ]
       }
@@ -96,7 +96,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '响应完成' Stop"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh Stop"
           }
         ]
       }
@@ -106,7 +106,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '队友空闲' TeammateIdle"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh TeammateIdle"
           }
         ]
       }
@@ -116,7 +116,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '任务完成' TaskCompleted"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh TaskCompleted"
           }
         ]
       }
@@ -126,7 +126,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '上下文压缩' PreCompact"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh PreCompact"
           }
         ]
       }
@@ -136,7 +136,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh '会话结束' SessionEnd"
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/notify.sh SessionEnd"
           }
         ]
       }

@@ -1,58 +1,91 @@
 {
   "enabled": true,
-  "notifications": {
-    "enabled": true,
-    "show": {
-      "SessionStart": true,
-      "UserPromptSubmit": false,
-      "PreToolUse": false,
-      "PermissionRequest": true,
-      "PostToolUse": false,
-      "PostToolUseFailure": false,
-      "Notification": false,
-      "SubagentStart": false,
-      "SubagentStop": true,
-      "Stop": true,
-      "TeammateIdle": false,
-      "TaskCompleted": true,
-      "PreCompact": false,
-      "SessionEnd": false
+  "events": {
+    "SessionStart": {
+      "enabled": true,
+      "notification": true,
+      "sound": "Submarine",
+      "message": "会话开始"
     },
-    "sound": "Glass",
-    "sounds": {
-      "default": "Glass",
-      "SessionStart": "Submarine",
-      "UserPromptSubmit": "Tink",
-      "PreToolUse": "Pop",
-      "PermissionRequest": "Basso",
-      "PostToolUse": "Glass",
-      "PostToolUseFailure": "Basso",
-      "Notification": "Tink",
-      "SubagentStart": "Ping",
-      "SubagentStop": "Purr",
-      "Stop": "stomp",
-      "TeammateIdle": "Pop",
-      "TaskCompleted": "1up",
-      "PreCompact": "Tink",
-      "SessionEnd": "Purr"
+    "UserPromptSubmit": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Tink",
+      "message": "提交提示"
     },
-    "log": true,
-    "log_file": "${CLAUDE_PLUGIN_ROOT}/notifications.log"
+    "PreToolUse": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Pop",
+      "message": "工具执行中"
+    },
+    "PermissionRequest": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Basso",
+      "message": "请求权限"
+    },
+    "PostToolUse": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Glass",
+      "message": "工具执行成功"
+    },
+    "PostToolUseFailure": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Basso",
+      "message": "工具执行失败"
+    },
+    "Notification": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Tink",
+      "message": "收到通知"
+    },
+    "SubagentStart": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Ping",
+      "message": "子代理启动"
+    },
+    "SubagentStop": {
+      "enabled": true,
+      "notification": true,
+      "sound": "Purr",
+      "message": "子代理停止"
+    },
+    "Stop": {
+      "enabled": true,
+      "notification": true,
+      "sound": "stomp",
+      "message": "响应完成"
+    },
+    "TeammateIdle": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Pop",
+      "message": "队友空闲"
+    },
+    "TaskCompleted": {
+      "enabled": true,
+      "notification": true,
+      "sound": "1up",
+      "message": "任务完成"
+    },
+    "PreCompact": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Tink",
+      "message": "上下文压缩"
+    },
+    "SessionEnd": {
+      "enabled": false,
+      "notification": true,
+      "sound": "Purr",
+      "message": "会话结束"
+    }
   },
-  "sounds": {
-    "SessionStart": true,
-    "UserPromptSubmit": false,
-    "PreToolUse": false,
-    "PermissionRequest": false,
-    "PostToolUse": false,
-    "PostToolUseFailure": false,
-    "Notification": false,
-    "SubagentStart": false,
-    "SubagentStop": true,
-    "Stop": true,
-    "TeammateIdle": false,
-    "TaskCompleted": true,
-    "PreCompact": false,
-    "SessionEnd": false
-  }
+  "log": true,
+  "log_file": "${CLAUDE_PLUGIN_ROOT}/notifications.log"
 }
