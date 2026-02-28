@@ -5,7 +5,7 @@
     "sound": "Glass",
     "sounds": {
       "default": "Glass",
-      "SessionStart": "Ping",
+      "SessionStart": "1up",
       "UserPromptSubmit": "Tink",
       "PreToolUse": "Pop",
       "PermissionRequest": "Basso",
@@ -24,12 +24,12 @@
     "log_file": "${CLAUDE_PLUGIN_ROOT}/notifications.log"
   },
   "stages": {
-    "SessionStart": false,
+    "SessionStart": true,
     "UserPromptSubmit": false,
     "PreToolUse": false,
-    "PermissionRequest": true,
+    "PermissionRequest": false,
     "PostToolUse": false,
-    "PostToolUseFailure": true,
+    "PostToolUseFailure": false,
     "Notification": false,
     "SubagentStart": false,
     "SubagentStop": true,
@@ -37,6 +37,6 @@
     "TeammateIdle": false,
     "TaskCompleted": true,
     "PreCompact": false,
-    "SessionEnd": true
+    "SessionEnd": false
   }
 }
