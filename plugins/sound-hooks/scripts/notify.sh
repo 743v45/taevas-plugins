@@ -15,6 +15,8 @@ TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
 # 默认配置
 DEFAULT_ENABLED=true
 DEFAULT_NOTIFY_ENABLED=true
+DEFAULT_SHOW_ENABLED=true
+DEFAULT_SOUND_ENABLED=true
 DEFAULT_SOUND="Glass"
 DEFAULT_LOG_FILE="${CLAUDE_PLUGIN_ROOT}/notifications.log"
 
@@ -47,15 +49,17 @@ load_config() {
     if [ -z "$load_error" ] && command -v jq &> /dev/null; then
         enabled=$(jq -r '.enabled // true' "$config_file" 2>/dev/null || echo "true")
         notify_enabled=$(jq -r '.notifications.enabled // true' "$config_file" 2>/dev/null || echo "true")
+        show_enabled=$(jq -r --arg stage "$STAGE" '.notifications.show[$stage] // true' "$config_file" 2>/dev/null || echo "true")
         sound=$(jq -r --arg stage "$STAGE" '.notifications.sounds[$stage] // .notifications.sound // "Glass"' "$config_file" 2>/dev/null || echo "Glass")
-        stage_enabled=$(jq -r --arg stage "$STAGE" '.stages[$stage] // true' "$config_file" 2>/dev/null || echo "true")
+        sound_enabled=$(jq -r --arg stage "$STAGE" '.sounds[$stage] // true' "$config_file" 2>/dev/null || echo "true")
         log_enabled=$(jq -r '.notifications.log // false' "$config_file" 2>/dev/null || echo "false")
         log_file=$(jq -r '.notifications.log_file // ""' "$config_file" 2>/dev/null || echo "")
     else
         enabled="true"
         notify_enabled="true"
+        show_enabled="true"
         sound="Glass"
-        stage_enabled="true"
+        sound_enabled="true"
         log_enabled="false"
         log_file=""
     fi
@@ -129,37 +133,36 @@ get_emoji() {
 send_notification() {
     local msg="$1"
     local snd="$2"
+    local show_notification="${3:-true}"
+    local with_sound="${4:-true}"
     local is_custom_sound=""
 
     case "$(uname -s)" in
         Darwin*)
-            # 先检查是否为自定义音效
-            local custom_sound="${CLAUDE_PLUGIN_ROOT}/src/sounds/${snd}.mp3"
-            if [ -f "$custom_sound" ]; then
-                # 使用 nohup 确保后台进程能继续运行
-                (nohup afplay "$custom_sound" > /dev/null 2>&1 &)
-                is_custom_sound="true"
-            else
-                # 使用系统声音
-                local sound_file="/System/Library/Sounds/${snd}.aiff"
-                if [ -f "$sound_file" ]; then
-                    (nohup afplay "$sound_file" > /dev/null 2>&1 &)
-                fi
-            fi
-            # 只在使用系统声音时设置 sound name，避免自定义声音播放两次
-            if [ "$is_custom_sound" != "true" ]; then
-                osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\" sound name \"$snd\"" 2>/dev/null || true
-            else
+            # 显示通知
+            if [ "$show_notification" == "true" ]; then
                 osascript -e "display notification \"$msg\" with title \"$(get_emoji $STAGE) Claude Code\"" 2>/dev/null || true
+            fi
+            # 播放声音
+            if [ "$with_sound" == "true" ]; then
+                local custom_sound="${CLAUDE_PLUGIN_ROOT}/src/sounds/${snd}.mp3"
+                if [ -f "$custom_sound" ]; then
+                    (nohup afplay "$custom_sound" > /dev/null 2>&1 &)
+                else
+                    local sound_file="/System/Library/Sounds/${snd}.aiff"
+                    if [ -f "$sound_file" ]; then
+                        (nohup afplay "$sound_file" > /dev/null 2>&1 &)
+                    fi
+                fi
             fi
             ;;
         Linux*)
-            if command -v notify-send &> /dev/null; then
+            if [ "$show_notification" == "true" ] && command -v notify-send &> /dev/null; then
                 notify-send "Claude Code" "$msg" 2>/dev/null || true
             fi
             ;;
         MINGW*|MSYS*|CYGWIN*)
-            if command -v powershell &> /dev/null; then
+            if [ "$show_notification" == "true" ] && command -v powershell &> /dev/null; then
                 powershell -Command "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.MessageBox]::Show('$msg', 'Claude Code')" 2>/dev/null || true
             fi
             ;;
@@ -172,22 +175,28 @@ main() {
     if ! load_config; then
         enabled="$DEFAULT_ENABLED"
         notify_enabled="$DEFAULT_NOTIFY_ENABLED"
+        show_enabled="$DEFAULT_SHOW_ENABLED"
         sound="$DEFAULT_SOUND"
-        stage_enabled="true"
+        sound_enabled="$DEFAULT_SOUND_ENABLED"
         log_enabled="false"
         log_file="$DEFAULT_LOG_FILE"
     fi
 
     # 检查是否启用
-    if [[ "$enabled" != "true" ]] || [[ "$notify_enabled" != "true" ]] || [[ "$stage_enabled" != "true" ]]; then
+    if [[ "$enabled" != "true" ]] || [[ "$notify_enabled" != "true" ]]; then
+        exit 0
+    fi
+
+    # 如果不显示通知也不播放声音，则退出
+    if [[ "$show_enabled" != "true" ]] && [[ "$sound_enabled" != "true" ]]; then
         exit 0
     fi
 
     # 验证声音
     sound=$(validate_sound "$sound")
 
-    # 发送通知
-    send_notification "$MESSAGE" "$sound"
+    # 发送通知（分别控制通知显示和声音播放）
+    send_notification "$MESSAGE" "$sound" "$show_enabled" "$sound_enabled"
 
     # 输出到 stdout
     local log_msg="[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $MESSAGE"
