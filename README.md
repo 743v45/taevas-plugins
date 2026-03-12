@@ -10,6 +10,7 @@ Claude Code 插件集合。
 | 插件 | 描述 | 文档 |
 |------|------|------|
 | **sound-hooks** | 任务事件声音通知 | [plugins/sound-hooks](plugins/sound-hooks) |
+| **hugo** | Hugo 博客文章发布 | [plugins/hugo](plugins/hugo) |
 
 ## 快速开始
 
