@@ -10,7 +10,7 @@ Create and publish blog posts to Hugo static site.
 ## Command Syntax
 
 ```
-/hugo [new|create|update] [content description] [site path] [-c|--check]
+/hugo [new|create|update|rescan] [content description] [site path] [-c|--check]
 ```
 
 ### Arguments
@@ -19,6 +19,7 @@ Create and publish blog posts to Hugo static site.
 |----------|-------------|
 | `new` / `create` | Force create a new post |
 | `update` | Force update an existing post |
+| `rescan` | Re-scan for Hugo sites and update cache |
 | `<content>` | Content description or title keywords |
 | `<site path>` | Path to Hugo site (optional) |
 | `-c` / `--check` | Verify with `hugo server` after create/update |
@@ -27,28 +28,58 @@ Create and publish blog posts to Hugo static site.
 
 1. **With `new` or `create`**: Always create a new post, error if file exists
 2. **With `update`**: Always update an existing post, error if not found
-3. **Without mode flag**: Auto-detect - search for existing post by title/keywords
+3. **With `rescan`**: Re-scan for Hugo sites, update cached site list
+4. **Without mode flag**: Auto-detect - search for existing post by title/keywords
    - If matching posts found → show list with scores, ask user to select one or create new
    - If no match → create new post
-4. **With `-c` or `--check`**: Run `hugo server -D` after create/update to preview
+5. **With `-c` or `--check`**: Run `hugo server -D` after create/update to preview
+
+## Configuration Cache
+
+Hugo skill caches configuration in `~/.config/hugo-skill/config.json` to avoid repeated checks:
+
+| Cache Item | Description | When Updated |
+|------------|-------------|--------------|
+| `hugo_version` | Hugo version string | First run or `rescan` |
+| `sites` | List of Hugo site paths | First run or `rescan` |
+
+### Cache Behavior
+
+- **Hugo Version**: Checked once, cached for subsequent runs. Use `/hugo rescan` to re-verify.
+- **Site List**: Scanned once, cached for subsequent runs. Use `/hugo rescan` to re-scan.
 
 ## Workflow
 
-1. **Check Hugo installation**
-   ```bash
-   hugo version
-   ```
-   If not installed, prompt user to install: `brew install hugo` (macOS) or see https://gohugo.io/installation/
+1. **Check Hugo installation (cached)**
 
-2. **Determine Hugo site path**
+   First run: Execute `hugo version` and cache result.
+   Subsequent runs: Use cached version, skip check.
+
+   ```bash
+   python3 scripts/config_manager.py version
+   ```
+
+   If Hugo not installed, prompt user: `brew install hugo` (macOS) or see https://gohugo.io/installation/
+
+2. **Determine Hugo site path (cached)**
+
+   First run: Scan common directories for Hugo sites, cache the list.
+   Subsequent runs: Use cached site list.
+
+   ```bash
+   python3 scripts/config_manager.py list
+   ```
 
    - If user specified a path → use it
-   - Otherwise → detect current directory using `scripts/detect_hugo_site.py`
+   - If only one cached site → use it
+   - If multiple cached sites → ask user to select
+   - If no cached sites → scan current directory using `scripts/detect_hugo_site.py`
 
    **Always confirm with user** unless explicitly told to skip confirmation.
 
-3. **Determine operation mode (new/update/auto)**
+3. **Determine operation mode (new/update/auto/rescan)**
 
+   - If user specified `rescan` → Re-scan for sites, update cache, then exit or continue
    - If user specified `new` or `create` → CREATE mode
    - If user specified `update` → UPDATE mode
    - Otherwise → AUTO mode
@@ -95,6 +126,39 @@ Create and publish blog posts to Hugo static site.
 
 ## Scripts
 
+### config_manager.py
+
+Manage Hugo skill configuration cache:
+
+```bash
+# Check Hugo version (cached after first run)
+python3 scripts/config_manager.py version
+
+# Force re-check Hugo version
+python3 scripts/config_manager.py version --force
+
+# List cached Hugo sites
+python3 scripts/config_manager.py list
+
+# Scan for Hugo sites (cached after first run)
+python3 scripts/config_manager.py sites
+
+# Force re-scan for Hugo sites
+python3 scripts/config_manager.py sites --force
+
+# Add a site manually
+python3 scripts/config_manager.py add /path/to/hugo/site
+
+# Remove a site from cache
+python3 scripts/config_manager.py remove /path/to/hugo/site
+
+# Re-scan and update all cached sites
+python3 scripts/config_manager.py rescan
+
+# Show full config
+python3 scripts/config_manager.py show
+```
+
 ### detect_hugo_site.py
 
 Check if a directory is a Hugo site root:
@@ -113,30 +177,39 @@ Returns:
 
 **User:** `/hugo`
 **Response:**
-1. Check `hugo version`
-2. Run `detect_hugo_site.py` on current directory
-3. If Hugo site found: "检测到 Hugo 站点在 `/path/to/site`，确认在此目录操作？"
-4. Ask: "请问您想写什么内容？"
+1. Check cached Hugo version (skip if already cached)
+2. Check cached site list (skip if already cached)
+3. If only one site: "检测到 Hugo 站点在 `/path/to/site`，确认在此目录操作？"
+4. If multiple sites: Show cached list, ask user to select
+5. Ask: "请问您想写什么内容？"
+
+**User:** `/hugo rescan`
+**Response:**
+1. Re-check Hugo version
+2. Re-scan for Hugo sites in common directories
+3. Update cache
+4. Show: "已重新扫描，找到 X 个 Hugo 站点：..."
 
 **User:** `/hugo 写一篇关于 Go 并发的文章`
 **Response:**
-1. Check Hugo installation
-2. Detect/confirm site path
-3. Search existing posts for "Go 并发" or similar keywords
-4. If matches found:
+1. Use cached Hugo version (skip check if already cached)
+2. Use cached site list (skip scan if already cached)
+3. Confirm/Select site path
+4. Search existing posts for "Go 并发" or similar keywords
+5. If matches found:
    ```
    找到以下相关文章：
      1. [content/posts/go-concurrency.md] "Go 并发编程指南" (score: 25)
      2. [content/posts/goroutine-basics.md] "Goroutine 基础入门" (score: 12)
    请选择要更新的文章（输入序号），或输入 'new' 创建新文章：
    ```
-5. User selects → update that post; User enters 'new' → create new post
-6. Confirm content and write file
+6. User selects → update that post; User enters 'new' → create new post
+7. Confirm content and write file
 
 **User:** `/hugo new Go 泛型教程`
 **Response:**
 1. Force create mode - skip existing post search
-2. Detect/confirm site path
+2. Use cached site (skip scan if already cached)
 3. Generate content
 4. Create new file: `content/posts/go-generics-tutorial.md`
 
@@ -150,7 +223,7 @@ Returns:
 
 **User:** `/hugo 写一篇关于 Rust 的文章 /path/to/another/hugo/site`
 **Response:**
-1. Use specified path instead of auto-detect
+1. Use specified path instead of cached site
 2. Follow same workflow as above
 
 **User:** `/hugo new Go 泛型教程 -c`
@@ -211,6 +284,9 @@ hugo-site/
 │   └── posts/
 │       └── my-first-post.md  ← New posts go here
 └── ...
+
+~/.config/hugo-skill/
+└── config.json  ← Cache file for version and sites
 ```
 
 ## Reference
