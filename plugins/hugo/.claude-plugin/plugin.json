@@ -1,0 +1,8 @@
+{
+  "name": "hugo",
+  "description": "Publish content to Hugo blog. Use when user invokes /hugo command to create new blog posts. Supports multiple usage patterns: (1) /hugo alone - check Hugo installation, find site, ask for content, (2) /hugo with content description - create post with described content, (3) /hugo with content and path - create post at specified path, (4) /hugo with path - use specified Hugo site path. Always confirms site path and content with user before writing.",
+  "author": {
+    "name": "743v45",
+    "email": "noreply@743v45.com"
+  }
+}
