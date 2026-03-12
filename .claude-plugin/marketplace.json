@@ -13,6 +13,12 @@
       "source": "./plugins/sound-hooks",
       "category": "notifications",
       "description": "Sound notification hooks for Claude Code task events. Get audio feedback when tasks are created, completed, or when commands execute."
+    },
+    {
+      "name": "hugo",
+      "source": "./plugins/hugo",
+      "category": "content",
+      "description": "Publish content to Hugo blog. Use when user invokes /hugo command to create new blog posts."
     }
   ]
 }
