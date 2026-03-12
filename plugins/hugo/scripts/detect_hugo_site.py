@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Detect if a directory is a Hugo site root."""
+"""Detect if a directory is a Hugo site root and manage posts."""
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -66,12 +67,111 @@ def is_hugo_site(directory: str) -> dict:
     return result
 
 
+def extract_title(file_path: str) -> str:
+    """Extract title from markdown file's front matter."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+
+        # Try TOML format (+++)
+        toml_match = re.search(r'^\+\+\+\s*\n(.*?)^\+\+\+', content, re.MULTILINE | re.DOTALL)
+        if toml_match:
+            front_matter = toml_match.group(1)
+            title_match = re.search(r'^title\s*=\s*["\'](.+?)["\']', front_matter, re.MULTILINE)
+            if title_match:
+                return title_match.group(1)
+
+        # Try YAML format (---)
+        yaml_match = re.search(r'^---\s*\n(.*?)^---', content, re.MULTILINE | re.DOTALL)
+        if yaml_match:
+            front_matter = yaml_match.group(1)
+            title_match = re.search(r'^title:\s*["\']?(.+?)["\']?\s*$', front_matter, re.MULTILINE)
+            if title_match:
+                return title_match.group(1).strip('"\'').strip()
+
+        return ""
+    except Exception:
+        return ""
+
+
+def search_posts(directory: str, keywords: str) -> list:
+    """
+    Search for posts matching keywords in title or filename.
+
+    Returns list of dicts with:
+        - path: relative path to post
+        - title: post title from front matter
+        - match_score: relevance score
+    """
+    dir_path = Path(directory).resolve()
+    posts_dir = dir_path / "content" / "posts"
+
+    if not posts_dir.exists():
+        return []
+
+    keywords_lower = keywords.lower()
+    results = []
+
+    for md_file in posts_dir.rglob("*.md"):
+        filename = md_file.stem.lower()
+        title = extract_title(str(md_file)).lower()
+
+        # Calculate match score
+        score = 0
+
+        # Check keyword in filename
+        if keywords_lower in filename:
+            score += 10
+
+        # Check keyword in title
+        if keywords_lower in title:
+            score += 20
+
+        # Check individual words
+        for word in keywords_lower.split():
+            if word in filename:
+                score += 3
+            if word in title:
+                score += 5
+
+        if score > 0:
+            results.append({
+                "path": str(md_file.relative_to(dir_path)),
+                "title": extract_title(str(md_file)),
+                "match_score": score
+            })
+
+    # Sort by score descending
+    results.sort(key=lambda x: x["match_score"], reverse=True)
+    return results
+
+
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python detect_hugo_site.py <directory>")
+        print("Usage: python detect_hugo_site.py <directory> [search_keywords]")
+        print("\nCommands:")
+        print("  <directory>              Check if directory is a Hugo site")
+        print("  <directory> <keywords>   Search for posts matching keywords")
         sys.exit(1)
 
     directory = sys.argv[1]
+
+    # Search mode
+    if len(sys.argv) >= 3:
+        keywords = " ".join(sys.argv[2:])
+        results = search_posts(directory, keywords)
+
+        print(f"Searching for: '{keywords}'")
+        print(f"Found {len(results)} matching post(s):")
+
+        for post in results:
+            print(f"  - [{post['path']}] \"{post['title']}\" (score: {post['match_score']})")
+
+        if not results:
+            print("  No matching posts found.")
+        return
+
+    # Detection mode
     result = is_hugo_site(directory)
 
     print(f"Directory: {directory}")
@@ -83,7 +183,8 @@ def main():
     if result['existing_posts']:
         print(f"Existing posts ({len(result['existing_posts'])}):")
         for post in result['existing_posts'][:10]:  # Show first 10
-            print(f"  - {post}")
+            title = extract_title(str(Path(directory) / post))
+            print(f"  - {post} \"{title}\"")
         if len(result['existing_posts']) > 10:
             print(f"  ... and {len(result['existing_posts']) - 10} more")
 
