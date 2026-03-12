@@ -264,6 +264,139 @@ def list_sites() -> list:
     return config.get("sites", [])
 
 
+def select_site_interactive(force_scan: bool = False) -> dict:
+    """
+    Interactive site selection with three options:
+    1. Select from scanned sites (confirm with user)
+    2. User provides custom path
+    3. Scan default path (~)
+
+    Returns:
+        - selected: bool (whether a site was selected)
+        - site: site info dict or None
+        - action: "selected" | "custom" | "default" | "cancelled"
+    """
+    # First, try to get cached or scan for sites
+    sites = find_hugo_sites(force=force_scan)
+
+    print("\n=== Hugo 站点选择 ===")
+    print("请选择操作方式：")
+    print("  0. 输入自定义路径")
+    print("  1. 扫描默认路径 (~)")
+
+    if sites:
+        print(f"\n已找到 {len(sites)} 个 Hugo 站点：")
+        for i, site in enumerate(sites, 2):
+            print(f"  {i}. {site['path']}")
+
+    print()
+
+    while True:
+        try:
+            choice = input("请输入选项编号: ").strip()
+
+            if not choice:
+                if sites and len(sites) == 1:
+                    # Auto-select if only one site
+                    print(f"\n自动选择唯一站点: {sites[0]['path']}")
+                    return {
+                        "selected": True,
+                        "site": sites[0],
+                        "action": "selected"
+                    }
+                continue
+
+            choice_num = int(choice)
+
+            if choice_num == 0:
+                # Custom path
+                custom_path = input("请输入 Hugo 站点路径: ").strip()
+                if custom_path:
+                    # Validate and add the site
+                    result = add_site(custom_path)
+                    if result["success"]:
+                        print(f"已添加站点: {result['site']['path']}")
+                        return {
+                            "selected": True,
+                            "site": result["site"],
+                            "action": "custom"
+                        }
+                    else:
+                        print(f"错误: {result['error']}")
+                        continue
+                else:
+                    print("路径不能为空")
+                    continue
+
+            elif choice_num == 1:
+                # Scan default path (~)
+                home_path = Path.home()
+                print(f"\n正在扫描 {home_path}...")
+                sites = find_hugo_sites(search_paths=[home_path], force=True)
+
+                if sites:
+                    print(f"找到 {len(sites)} 个站点：")
+                    for i, site in enumerate(sites, 1):
+                        print(f"  {i}. {site['path']}")
+
+                    if len(sites) == 1:
+                        print(f"\n自动选择: {sites[0]['path']}")
+                        return {
+                            "selected": True,
+                            "site": sites[0],
+                            "action": "default"
+                        }
+
+                    # Let user select from scanned sites
+                    sub_choice = input("请选择站点编号: ").strip()
+                    try:
+                        sub_num = int(sub_choice)
+                        if 1 <= sub_num <= len(sites):
+                            return {
+                                "selected": True,
+                                "site": sites[sub_num - 1],
+                                "action": "default"
+                            }
+                        else:
+                            print(f"请输入 1-{len(sites)} 之间的数字")
+                    except ValueError:
+                        print("请输入有效数字")
+                else:
+                    print(f"在 {home_path} 下未找到 Hugo 站点")
+                continue
+
+            elif sites and 2 <= choice_num <= len(sites) + 1:
+                # Select from existing sites
+                site_idx = choice_num - 2
+                selected_site = sites[site_idx]
+
+                # Confirm with user
+                confirm = input(f"确认使用站点 '{selected_site['path']}'? [Y/n]: ").strip().lower()
+                if confirm in ('', 'y', 'yes'):
+                    return {
+                        "selected": True,
+                        "site": selected_site,
+                        "action": "selected"
+                    }
+                else:
+                    print("已取消，请重新选择")
+                    continue
+
+            else:
+                max_option = len(sites) + 1 if sites else 1
+                print(f"请输入 0-{max_option} 之间的数字")
+
+        except ValueError:
+            print("请输入有效数字")
+        except KeyboardInterrupt:
+            print("\n已取消")
+            return {
+                "selected": False,
+                "site": None,
+                "action": "cancelled"
+            }
+
+
 def main():
     """CLI interface."""
     if len(sys.argv) < 2:
@@ -275,6 +408,7 @@ def main():
         print("  config_manager.py add <path>           Add a site to cache")
         print("  config_manager.py remove <path>        Remove a site from cache")
         print("  config_manager.py rescan               Re-scan for Hugo sites")
+        print("  config_manager.py select [--force]     Interactive site selection")
         print("  config_manager.py show                 Show full config")
         sys.exit(1)
 
@@ -349,6 +483,19 @@ def main():
     elif command == "show":
         config = load_config()
         print(json.dumps(config, indent=2, ensure_ascii=False))
+
+    elif command == "select":
+        force = "--force" in sys.argv or "-f" in sys.argv
+        result = select_site_interactive(force_scan=force)
+
+        if result["selected"]:
+            print(f"\n已选择站点: {result['site']['path']}")
+            print(f"操作方式: {result['action']}")
+            # Output JSON for easy parsing by caller
+            print("\n--- JSON OUTPUT ---")
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            print("未选择站点")
 
     else:
         print(f"Unknown command: {command}")

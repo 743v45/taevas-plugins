@@ -66,8 +66,29 @@ Hugo skill caches configuration in `~/.config/hugo-skill/config.json` to avoid r
    First run: Scan common directories for Hugo sites, cache the list.
    Subsequent runs: Use cached site list.
 
+   **Interactive selection via `select` command:**
+
    ```bash
+   python3 scripts/config_manager.py select
+   ```
+
+   This presents three options:
+   - **Option 0**: Enter a custom path (user provides site location)
+   - **Option 1**: Scan default path (`~`) for Hugo sites
+   - **Option 2+**: Select from already cached sites
+
+   The interactive flow ensures:
+   1. **User confirmation required** - Always confirm before using a site
+   2. **Custom path option** - User can provide their own path
+   3. **Default path scan** - User can choose to scan home directory
+
+   **Direct commands (non-interactive):**
+   ```bash
+   # List cached sites
    python3 scripts/config_manager.py list
+
+   # Scan for sites (cached after first run)
+   python3 scripts/config_manager.py sites
    ```
 
    - If user specified a path → use it
@@ -145,6 +166,13 @@ python3 scripts/config_manager.py sites
 
 # Force re-scan for Hugo sites
 python3 scripts/config_manager.py sites --force
+
+# Interactive site selection (recommended)
+# Options: 0=custom path, 1=scan ~, 2+=select from cached
+python3 scripts/config_manager.py select
+
+# Force re-scan during interactive selection
+python3 scripts/config_manager.py select --force
 
 # Add a site manually
 python3 scripts/config_manager.py add /path/to/hugo/site
