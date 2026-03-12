@@ -145,6 +145,53 @@ Hugo skill caches configuration in `~/.config/hugo-skill/config.json` to avoid r
    ```
    Starts local server for preview. User can stop with Ctrl+C.
 
+8. **Git commit workflow (after create/update)**
+
+   After successfully creating or updating a post, ask the user:
+   > "文章已完成。是否需要 git add 并 commit？"
+
+   **If user wants to commit:**
+
+   1. Check git status to see what files have changed:
+      ```bash
+      cd /path/to/hugo/site
+      git status
+      ```
+
+   2. **Isolation check** - Ensure only the newly created/updated post file is staged:
+      - If only the target post file has changes → proceed with commit
+      - If other files have changes that are unrelated:
+        - Use `git add <post-file-path>` to stage only the post file
+        - Verify with `git diff --cached --name-only` that only the intended file is staged
+      - If unable to isolate (e.g., other changes are interdependent or conflict) → ask user:
+        > "检测到其他未提交的更改，无法单独提交文章。是否放弃提交？"
+        - If user confirms → skip commit
+        - If user wants to proceed anyway → warn and proceed
+
+   3. **Create commit** with descriptive message:
+      ```bash
+      git commit -m "$(cat <<'EOF'
+      <action>: <post-title>
+
+      <brief description of changes>
+
+      Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+      EOF
+      )"
+      ```
+      Where `<action>` is:
+      - `new` for new posts
+      - `update` for updated posts
+
+   4. **After commit succeeds**, ask user:
+      > "提交完成。是否需要 git push？"
+
+      - If yes → run `git push`
+      - If no → inform user that commit is ready locally
+
+   **If user declines commit:**
+   > "好的，文章已保存但未提交。您可以稍后手动提交。"
+
 ## Scripts
 
 ### config_manager.py
