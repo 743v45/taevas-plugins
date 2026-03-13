@@ -42,11 +42,34 @@ Hugo skill caches configuration in `~/.config/hugo-skill/config.json` to avoid r
 |------------|-------------|--------------|
 | `hugo_version` | Hugo version string | First run or `rescan` |
 | `sites` | List of Hugo site paths | First run or `rescan` |
+| `blacklist` | List of blacklisted site paths | When user adds/removes from blacklist |
 
 ### Cache Behavior
 
 - **Hugo Version**: Checked once, cached for subsequent runs. Use `/hugo rescan` to re-verify.
 - **Site List**: Scanned once, cached for subsequent runs. Use `/hugo rescan` to re-scan.
+- **Blacklist**: Persists across sessions. Blacklisted sites are excluded from selection and scanning.
+
+### Site Blacklist
+
+You can blacklist sites to exclude them from selection:
+
+```bash
+# Add a site to blacklist
+python3 scripts/config_manager.py blacklist /path/to/site
+
+# Remove a site from blacklist
+python3 scripts/config_manager.py unblacklist /path/to/site
+
+# List blacklisted sites
+python3 scripts/config_manager.py blacklist-list
+```
+
+Blacklisted sites:
+- Are excluded from the available site list
+- Won't appear in selection menus
+- Show separately with `[黑名单]` prefix when scanning
+- Can still be used if explicitly provided via custom path (with confirmation to remove from blacklist)
 
 ## Workflow
 
@@ -230,6 +253,11 @@ python3 scripts/config_manager.py remove /path/to/hugo/site
 # Re-scan and update all cached sites
 python3 scripts/config_manager.py rescan
 
+# Blacklist management
+python3 scripts/config_manager.py blacklist /path/to/site    # Add to blacklist
+python3 scripts/config_manager.py unblacklist /path/to/site  # Remove from blacklist
+python3 scripts/config_manager.py blacklist-list             # List blacklisted sites
+
 # Show full config
 python3 scripts/config_manager.py show
 ```
@@ -263,7 +291,8 @@ Returns:
 1. Re-check Hugo version
 2. Re-scan for Hugo sites in common directories
 3. Update cache
-4. Show: "已重新扫描，找到 X 个 Hugo 站点：..."
+4. Show: "已重新扫描，找到 X 个可用 Hugo 站点：..."
+5. If there are blacklisted sites: "[黑名单] Y 个站点已禁用：..."
 
 **User:** `/hugo 写一篇关于 Go 并发的文章`
 **Response:**

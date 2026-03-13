@@ -26,17 +26,23 @@ def load_config() -> dict:
             "hugo_version": None,
             "hugo_version_checked": None,
             "sites": [],
+            "blacklist": [],
             "last_updated": None
         }
 
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            config = json.load(f)
+            # Ensure blacklist exists for backward compatibility
+            if "blacklist" not in config:
+                config["blacklist"] = []
+            return config
     except (json.JSONDecodeError, IOError):
         return {
             "hugo_version": None,
             "hugo_version_checked": None,
             "sites": [],
+            "blacklist": [],
             "last_updated": None
         }
 
@@ -111,13 +117,14 @@ def check_hugo_version(force: bool = False) -> dict:
         }
 
 
-def find_hugo_sites(search_paths: list = None, force: bool = False) -> list:
+def find_hugo_sites(search_paths: list = None, force: bool = False, include_blacklisted: bool = False) -> list:
     """
     Find all Hugo sites in search paths and cache results.
 
     Args:
         search_paths: List of directories to search (default: home and common locations)
         force: Force re-scan even if cached results exist
+        include_blacklisted: If True, return all sites including blacklisted ones
 
     Returns:
         List of site info dicts with path, config_file, content_dir
@@ -126,67 +133,188 @@ def find_hugo_sites(search_paths: list = None, force: bool = False) -> list:
 
     # Return cached sites if available and not forced
     if not force and config.get("sites"):
-        return config["sites"]
+        sites = config["sites"]
+    else:
+        # Default search paths
+        if search_paths is None:
+            search_paths = [
+                Path.home(),
+                Path.home() / "code",
+                Path.home() / "projects",
+                Path.home() / "workspace",
+                Path.home() / "work",
+                Path.home() / "blog",
+                Path.home() / "sites",
+            ]
 
-    # Default search paths
-    if search_paths is None:
-        search_paths = [
-            Path.home(),
-            Path.home() / "code",
-            Path.home() / "projects",
-            Path.home() / "workspace",
-            Path.home() / "work",
-            Path.home() / "blog",
-            Path.home() / "sites",
+            # Add current directory if available
+            try:
+                search_paths.insert(0, Path.cwd())
+            except:
+                pass
+
+        sites = []
+        config_names = ["config", "hugo"]
+        config_extensions = [".toml", ".yaml", ".yml", ".json"]
+
+        for base_path in search_paths:
+            if not base_path.exists() or not base_path.is_dir():
+                continue
+
+            # Search for Hugo config files
+            for config_name in config_names:
+                for ext in config_extensions:
+                    pattern = f"**/{config_name}{ext}"
+                    for config_file in base_path.glob(pattern):
+                        site_dir = config_file.parent
+
+                        # Skip if it's inside another Hugo site's content directory
+                        if "content" in str(config_file):
+                            continue
+
+                        # Verify it has a content directory
+                        content_dir = site_dir / "content"
+                        if content_dir.exists() and content_dir.is_dir():
+                            sites.append({
+                                "path": str(site_dir),
+                                "config_file": str(config_file),
+                                "content_dir": str(content_dir)
+                            })
+
+        # Remove duplicates based on path
+        seen = set()
+        unique_sites = []
+        for site in sites:
+            if site["path"] not in seen:
+                seen.add(site["path"])
+                unique_sites.append(site)
+
+        # Update config
+        config["sites"] = unique_sites
+        save_config(config)
+
+        sites = unique_sites
+
+    # Filter out blacklisted sites if not explicitly including them
+    if not include_blacklisted:
+        blacklist = config.get("blacklist", [])
+        blacklisted_paths = {Path(p).resolve() for p in blacklist}
+        sites = [
+            s for s in sites
+            if Path(s["path"]).resolve() not in blacklisted_paths
         ]
 
-        # Add current directory if available
-        try:
-            search_paths.insert(0, Path.cwd())
-        except:
-            pass
+    return sites
 
-    sites = []
-    config_names = ["config", "hugo"]
-    config_extensions = [".toml", ".yaml", ".yml", ".json"]
 
-    for base_path in search_paths:
-        if not base_path.exists() or not base_path.is_dir():
-            continue
+def get_blacklisted_sites() -> list:
+    """
+    Get all blacklisted sites with their info.
 
-        # Search for Hugo config files
-        for config_name in config_names:
-            for ext in config_extensions:
-                pattern = f"**/{config_name}{ext}"
-                for config_file in base_path.glob(pattern):
-                    site_dir = config_file.parent
+    Returns:
+        List of site info dicts that are in the blacklist
+    """
+    config = load_config()
+    blacklist = config.get("blacklist", [])
 
-                    # Skip if it's inside another Hugo site's content directory
-                    if "content" in str(config_file):
-                        continue
+    if not blacklist:
+        return []
 
-                    # Verify it has a content directory
-                    content_dir = site_dir / "content"
-                    if content_dir.exists() and content_dir.is_dir():
-                        sites.append({
-                            "path": str(site_dir),
-                            "config_file": str(config_file),
-                            "content_dir": str(content_dir)
-                        })
+    # Get full site info for blacklisted paths
+    blacklisted_sites = []
+    all_sites = config.get("sites", [])
 
-    # Remove duplicates based on path
-    seen = set()
-    unique_sites = []
-    for site in sites:
-        if site["path"] not in seen:
-            seen.add(site["path"])
-            unique_sites.append(site)
+    for path in blacklist:
+        # Find site info from cached sites
+        site_info = None
+        for site in all_sites:
+            if Path(site["path"]).resolve() == Path(path).resolve():
+                site_info = site.copy()
+                break
 
-    # Update config
-    config["sites"] = unique_sites
+        if not site_info:
+            # Site not in cache, create minimal info
+            site_info = {
+                "path": path,
+                "config_file": None,
+                "content_dir": None
+            }
+
+        blacklisted_sites.append(site_info)
+
+    return blacklisted_sites
+
+
+def blacklist_site(site_path: str) -> dict:
+    """
+    Add a site to the blacklist.
+
+    Args:
+        site_path: Path to the Hugo site
+
+    Returns:
+        Result dict with success status
+    """
+    config = load_config()
+    site_dir = Path(site_path).resolve()
+
+    # Initialize blacklist if not exists
+    if "blacklist" not in config:
+        config["blacklist"] = []
+
+    # Check if already blacklisted
+    blacklisted_paths = [Path(p).resolve() for p in config["blacklist"]]
+    if site_dir in blacklisted_paths:
+        return {
+            "success": True,
+            "already_blacklisted": True,
+            "path": str(site_dir)
+        }
+
+    # Add to blacklist
+    config["blacklist"].append(str(site_dir))
     save_config(config)
 
-    return unique_sites
+    return {
+        "success": True,
+        "already_blacklisted": False,
+        "path": str(site_dir)
+    }
+
+
+def unblacklist_site(site_path: str) -> dict:
+    """
+    Remove a site from the blacklist.
+
+    Args:
+        site_path: Path to the Hugo site
+
+    Returns:
+        Result dict with success status
+    """
+    config = load_config()
+    site_dir = Path(site_path).resolve()
+
+    blacklist = config.get("blacklist", [])
+    original_count = len(blacklist)
+
+    config["blacklist"] = [
+        p for p in blacklist
+        if Path(p).resolve() != site_dir
+    ]
+
+    if len(config["blacklist"]) == original_count:
+        return {
+            "success": False,
+            "error": f"Site '{site_path}' is not in blacklist"
+        }
+
+    save_config(config)
+
+    return {
+        "success": True,
+        "path": str(site_dir)
+    }
 
 
 def add_site(site_path: str) -> dict:
@@ -279,15 +407,24 @@ def select_site_interactive(force_scan: bool = False) -> dict:
     # First, try to get cached or scan for sites
     sites = find_hugo_sites(force=force_scan)
 
+    # Get blacklisted sites for display
+    blacklisted = get_blacklisted_sites()
+
     print("\n=== Hugo 站点选择 ===")
     print("请选择操作方式：")
     print("  0. 输入自定义路径")
     print("  1. 扫描默认路径 (~)")
 
     if sites:
-        print(f"\n已找到 {len(sites)} 个 Hugo 站点：")
+        print(f"\n已找到 {len(sites)} 个可用 Hugo 站点：")
         for i, site in enumerate(sites, 2):
             print(f"  {i}. {site['path']}")
+
+    # Show blacklisted sites separately
+    if blacklisted:
+        print(f"\n[黑名单] {len(blacklisted)} 个站点已禁用：")
+        for i, site in enumerate(blacklisted, 1):
+            print(f"  - {site['path']}")
 
     print()
 
@@ -312,6 +449,19 @@ def select_site_interactive(force_scan: bool = False) -> dict:
                 # Custom path
                 custom_path = input("请输入 Hugo 站点路径: ").strip()
                 if custom_path:
+                    # Check if blacklisted
+                    custom_path_resolved = Path(custom_path).resolve()
+                    blacklisted_paths = [Path(p).resolve() for p in [s["path"] for s in blacklisted]]
+                    if custom_path_resolved in blacklisted_paths:
+                        print(f"警告: '{custom_path}' 在黑名单中")
+                        confirm = input("是否要从黑名单移除并使用？[y/N]: ").strip().lower()
+                        if confirm in ('y', 'yes'):
+                            unblacklist_site(custom_path)
+                            print(f"已从黑名单移除: {custom_path}")
+                        else:
+                            print("已取消")
+                            continue
+
                     # Validate and add the site
                     result = add_site(custom_path)
                     if result["success"]:
@@ -335,7 +485,7 @@ def select_site_interactive(force_scan: bool = False) -> dict:
                 sites = find_hugo_sites(search_paths=[home_path], force=True)
 
                 if sites:
-                    print(f"找到 {len(sites)} 个站点：")
+                    print(f"找到 {len(sites)} 个可用站点：")
                     for i, site in enumerate(sites, 1):
                         print(f"  {i}. {site['path']}")
 
@@ -409,6 +559,9 @@ def main():
         print("  config_manager.py remove <path>        Remove a site from cache")
         print("  config_manager.py rescan               Re-scan for Hugo sites")
         print("  config_manager.py select [--force]     Interactive site selection")
+        print("  config_manager.py blacklist <path>     Add a site to blacklist")
+        print("  config_manager.py unblacklist <path>   Remove a site from blacklist")
+        print("  config_manager.py blacklist-list       List blacklisted sites")
         print("  config_manager.py show                 Show full config")
         sys.exit(1)
 
@@ -441,12 +594,19 @@ def main():
 
     elif command == "list":
         sites = list_sites()
+        blacklisted = get_blacklisted_sites()
+
         if sites:
             print(f"Cached Hugo sites ({len(sites)}):")
             for i, site in enumerate(sites, 1):
                 print(f"  {i}. {site['path']}")
         else:
             print("No cached sites. Run 'config_manager.py sites' to scan, or add manually.")
+
+        if blacklisted:
+            print(f"\nBlacklisted sites ({len(blacklisted)}):")
+            for site in blacklisted:
+                print(f"  - {site['path']}")
 
     elif command == "add":
         if len(sys.argv) < 3:
@@ -473,12 +633,54 @@ def main():
         else:
             print(f"Error: {result['error']}")
 
+    elif command == "blacklist":
+        if len(sys.argv) < 3:
+            print("Usage: config_manager.py blacklist <path>")
+            sys.exit(1)
+
+        result = blacklist_site(sys.argv[2])
+        if result["success"]:
+            if result.get("already_blacklisted"):
+                print(f"Site already blacklisted: {result['path']}")
+            else:
+                print(f"Added to blacklist: {result['path']}")
+                print("Note: This site will be excluded from selection and scanning.")
+        else:
+            print(f"Error: {result.get('error', 'Unknown error')}")
+
+    elif command == "unblacklist":
+        if len(sys.argv) < 3:
+            print("Usage: config_manager.py unblacklist <path>")
+            sys.exit(1)
+
+        result = unblacklist_site(sys.argv[2])
+        if result["success"]:
+            print(f"Removed from blacklist: {result['path']}")
+        else:
+            print(f"Error: {result['error']}")
+
+    elif command == "blacklist-list":
+        blacklisted = get_blacklisted_sites()
+        if blacklisted:
+            print(f"Blacklisted sites ({len(blacklisted)}):")
+            for i, site in enumerate(blacklisted, 1):
+                print(f"  {i}. {site['path']}")
+        else:
+            print("No blacklisted sites.")
+
     elif command == "rescan":
         print("Re-scanning for Hugo sites...")
         sites = find_hugo_sites(force=True)
-        print(f"Found {len(sites)} Hugo site(s):")
+        blacklisted = get_blacklisted_sites()
+
+        print(f"Found {len(sites)} available Hugo site(s):")
         for i, site in enumerate(sites, 1):
             print(f"  {i}. {site['path']}")
+
+        if blacklisted:
+            print(f"\n[Blacklisted] {len(blacklisted)} site(s) excluded:")
+            for site in blacklisted:
+                print(f"  - {site['path']}")
 
     elif command == "show":
         config = load_config()
