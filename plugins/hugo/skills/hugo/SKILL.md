@@ -1,6 +1,6 @@
 ---
 name: hugo
-description: "Publish content to Hugo blog. Use when user invokes /hugo command to create or update blog posts. Supports multiple usage patterns: (1) /hugo alone - check Hugo installation, find site, ask for content, (2) /hugo with content description - create/update post with described content, (3) /hugo with content and path - create/update post at specified path, (4) /hugo new <content> - force create new post, (5) /hugo update <content> - force update existing post. Always confirms site path and content with user before writing."
+description: "Publish content to Hugo blog. Use when user invokes /hugo command to create or update blog posts. Supports multiple usage patterns: (1) /hugo alone - check Hugo installation, use configured site or ask for path, ask for content, (2) /hugo with content description - create/update post with described content, (3) /hugo with content and path - create/update post at specified path, (4) /hugo new <content> - force create new post, (5) /hugo update <content> - force update existing post. Site path is user-configured, no automatic scanning."
 ---
 
 # Hugo Blog Publisher
@@ -10,7 +10,7 @@ Create and publish blog posts to Hugo static site.
 ## Command Syntax
 
 ```
-/hugo [new|create|update|rescan] [content description] [site path] [-c|--check]
+/hugo [new|create|update] [content description] [site path] [-c|--check]
 ```
 
 ### Arguments
@@ -19,7 +19,6 @@ Create and publish blog posts to Hugo static site.
 |----------|-------------|
 | `new` / `create` | Force create a new post |
 | `update` | Force update an existing post |
-| `rescan` | Re-scan for Hugo sites and update cache |
 | `<content>` | Content description or title keywords |
 | `<site path>` | Path to Hugo site (optional) |
 | `-c` / `--check` | Verify with `hugo server` after create/update |
@@ -28,11 +27,16 @@ Create and publish blog posts to Hugo static site.
 
 1. **With `new` or `create`**: Always create a new post, error if file exists
 2. **With `update`**: Always update an existing post, error if not found
-3. **With `rescan`**: Re-scan for Hugo sites, update cached site list
-4. **Without mode flag**: Auto-detect - search for existing post by title/keywords
+3. **Without mode flag**: Auto-detect - search for existing post by title/keywords
    - If matching posts found → show list with scores, ask user to select one or create new
    - If no match → create new post
-5. **With `-c` or `--check`**: Run `hugo server -D` after create/update to preview
+4. **With `-c` or `--check`**: Run `hugo server -D` after create/update to preview
+
+### Site Path Resolution
+
+1. **User provides path in command** → Use that path
+2. **No path in command, but current_site is configured** → Use configured site
+3. **No path in command, no current_site configured** → Ask user for path and save it as current_site
 
 ## Configuration Cache
 
@@ -40,36 +44,27 @@ Hugo skill caches configuration in `~/.config/hugo-skill/config.json` to avoid r
 
 | Cache Item | Description | When Updated |
 |------------|-------------|--------------|
-| `hugo_version` | Hugo version string | First run or `rescan` |
-| `sites` | List of Hugo site paths | First run or `rescan` |
-| `blacklist` | List of blacklisted site paths | When user adds/removes from blacklist |
+| `hugo_version` | Hugo version string | First run or manual force |
+| `current_site` | Current Hugo site path | When user sets/changes it |
+| `sites` | List of known Hugo site paths | When user adds a site |
 
 ### Cache Behavior
 
-- **Hugo Version**: Checked once, cached for subsequent runs. Use `/hugo rescan` to re-verify.
-- **Site List**: Scanned once, cached for subsequent runs. Use `/hugo rescan` to re-scan.
-- **Blacklist**: Persists across sessions. Blacklisted sites are excluded from selection and scanning.
+- **Hugo Version**: Checked once, cached for subsequent runs. Use `python3 scripts/config_manager.py version --force` to re-verify.
+- **Current Site**: Set by user, used as default when no path specified.
+- **Sites List**: Manually added by user, no automatic scanning.
 
-### Site Blacklist
+### Current Site Configuration
 
-You can blacklist sites to exclude them from selection:
+The "current" site is the default site used when no path is specified:
 
 ```bash
-# Add a site to blacklist
-python3 scripts/config_manager.py blacklist /path/to/site
+# Set the current site
+python3 scripts/config_manager.py set-current /path/to/hugo/site
 
-# Remove a site from blacklist
-python3 scripts/config_manager.py unblacklist /path/to/site
-
-# List blacklisted sites
-python3 scripts/config_manager.py blacklist-list
+# Remove current site setting
+python3 scripts/config_manager.py unset-current
 ```
-
-Blacklisted sites:
-- Are excluded from the available site list
-- Won't appear in selection menus
-- Show separately with `[黑名单]` prefix when scanning
-- Can still be used if explicitly provided via custom path (with confirmation to remove from blacklist)
 
 ## Workflow
 
@@ -84,46 +79,44 @@ Blacklisted sites:
 
    If Hugo not installed, prompt user: `brew install hugo` (macOS) or see https://gohugo.io/installation/
 
-2. **Determine Hugo site path (cached)**
+2. **Determine Hugo site path (user-provided only)**
 
-   First run: Scan common directories for Hugo sites, cache the list.
-   Subsequent runs: Use cached site list.
+   **不再自动扫描目录**。只使用用户提供的配置。
 
-   **Interactive selection via `select` command:**
+   **如果有配置的站点：**
+   - 直接使用配置的站点，无需询问
 
+   **如果没有配置站点：**
+   - 直接询问用户提供站点路径
+   - 用户输入后保存到配置，下次直接使用
+
+   **配置管理命令：**
    ```bash
-   python3 scripts/config_manager.py select
-   ```
+   # 查看当前配置
+   python3 scripts/config_manager.py show
 
-   This presents three options:
-   - **Option 0**: Enter a custom path (user provides site location)
-   - **Option 1**: Scan default path (`~`) for Hugo sites
-   - **Option 2+**: Select from already cached sites
+   # 设置当前使用的站点
+   python3 scripts/config_manager.py set-current /path/to/hugo/site
 
-   The interactive flow ensures:
-   1. **User confirmation required** - Always confirm before using a site
-   2. **Custom path option** - User can provide their own path
-   3. **Default path scan** - User can choose to scan home directory
-
-   **Direct commands (non-interactive):**
-   ```bash
-   # List cached sites
+   # 列出已配置的站点
    python3 scripts/config_manager.py list
 
-   # Scan for sites (cached after first run)
-   python3 scripts/config_manager.py sites
+   # 添加站点到配置
+   python3 scripts/config_manager.py add /path/to/hugo/site
+
+   # 从配置中移除站点
+   python3 scripts/config_manager.py remove /path/to/hugo/site
    ```
 
-   - If user specified a path → use it
-   - If only one cached site → use it
-   - If multiple cached sites → ask user to select
-   - If no cached sites → scan current directory using `scripts/detect_hugo_site.py`
+   **用户在命令中指定路径时：**
+   - 如果用户提供了路径参数 → 使用该路径
+   - 如果用户未提供且无配置 → 询问用户路径并保存配置
+   - 如果用户未提供但有配置 → 直接使用配置的站点
 
-   **Always confirm with user** unless explicitly told to skip confirmation.
+   **不再进行目录扫描，所有站点路径必须由用户明确提供。**
 
-3. **Determine operation mode (new/update/auto/rescan)**
+3. **Determine operation mode (new/update/auto)**
 
-   - If user specified `rescan` → Re-scan for sites, update cache, then exit or continue
    - If user specified `new` or `create` → CREATE mode
    - If user specified `update` → UPDATE mode
    - Otherwise → AUTO mode
@@ -228,38 +221,23 @@ python3 scripts/config_manager.py version
 # Force re-check Hugo version
 python3 scripts/config_manager.py version --force
 
-# List cached Hugo sites
-python3 scripts/config_manager.py list
-
-# Scan for Hugo sites (cached after first run)
-python3 scripts/config_manager.py sites
-
-# Force re-scan for Hugo sites
-python3 scripts/config_manager.py sites --force
-
-# Interactive site selection (recommended)
-# Options: 0=custom path, 1=scan ~, 2+=select from cached
-python3 scripts/config_manager.py select
-
-# Force re-scan during interactive selection
-python3 scripts/config_manager.py select --force
-
-# Add a site manually
-python3 scripts/config_manager.py add /path/to/hugo/site
-
-# Remove a site from cache
-python3 scripts/config_manager.py remove /path/to/hugo/site
-
-# Re-scan and update all cached sites
-python3 scripts/config_manager.py rescan
-
-# Blacklist management
-python3 scripts/config_manager.py blacklist /path/to/site    # Add to blacklist
-python3 scripts/config_manager.py unblacklist /path/to/site  # Remove from blacklist
-python3 scripts/config_manager.py blacklist-list             # List blacklisted sites
-
 # Show full config
 python3 scripts/config_manager.py show
+
+# Set current site (used by default)
+python3 scripts/config_manager.py set-current /path/to/hugo/site
+
+# Remove current site setting
+python3 scripts/config_manager.py unset-current
+
+# List configured sites
+python3 scripts/config_manager.py list
+
+# Add a site to configuration
+python3 scripts/config_manager.py add /path/to/hugo/site
+
+# Remove a site from configuration
+python3 scripts/config_manager.py remove /path/to/hugo/site
 ```
 
 ### detect_hugo_site.py
@@ -281,39 +259,30 @@ Returns:
 **User:** `/hugo`
 **Response:**
 1. Check cached Hugo version (skip if already cached)
-2. Check cached site list (skip if already cached)
-3. If only one site: "检测到 Hugo 站点在 `/path/to/site`，确认在此目录操作？"
-4. If multiple sites: Show cached list, ask user to select
-5. Ask: "请问您想写什么内容？"
-
-**User:** `/hugo rescan`
-**Response:**
-1. Re-check Hugo version
-2. Re-scan for Hugo sites in common directories
-3. Update cache
-4. Show: "已重新扫描，找到 X 个可用 Hugo 站点：..."
-5. If there are blacklisted sites: "[黑名单] Y 个站点已禁用：..."
+2. Check if site is configured:
+   - If configured: "使用已配置站点: `/path/to/site`"
+   - If not configured: Ask user: "请提供您的 Hugo 站点路径："
+3. Ask: "请问您想写什么内容？"
 
 **User:** `/hugo 写一篇关于 Go 并发的文章`
 **Response:**
 1. Use cached Hugo version (skip check if already cached)
-2. Use cached site list (skip scan if already cached)
-3. Confirm/Select site path
-4. Search existing posts for "Go 并发" or similar keywords
-5. If matches found:
+2. Use configured site (or ask if not configured)
+3. Search existing posts for "Go 并发" or similar keywords
+4. If matches found:
    ```
    找到以下相关文章：
      1. [content/posts/go-concurrency.md] "Go 并发编程指南" (score: 25)
      2. [content/posts/goroutine-basics.md] "Goroutine 基础入门" (score: 12)
    请选择要更新的文章（输入序号），或输入 'new' 创建新文章：
    ```
-6. User selects → update that post; User enters 'new' → create new post
-7. Confirm content and write file
+5. User selects → update that post; User enters 'new' → create new post
+6. Confirm content and write file
 
 **User:** `/hugo new Go 泛型教程`
 **Response:**
 1. Force create mode - skip existing post search
-2. Use cached site (skip scan if already cached)
+2. Use configured site (or ask if not configured)
 3. Generate content
 4. Create new file: `content/posts/go-generics-tutorial.md`
 
