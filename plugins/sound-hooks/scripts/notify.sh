@@ -153,7 +153,7 @@ send_notification() {
         Darwin*)
             # 显示通知（转义特殊字符避免 shell 注入）
             if [ "$show_notification" == "true" ]; then
-                local title="$(get_emoji $STAGE) Claude Code"
+                local title="$(get_emoji "$STAGE") Claude Code"
                 local escaped_msg=$(printf '%s' "$msg" | sed 's/\\/\\\\/g; s/"/\\"/g')
                 local escaped_title=$(printf '%s' "$title" | sed 's/\\/\\\\/g; s/"/\\"/g')
                 osascript -e "display notification \"$escaped_msg\" with title \"$escaped_title\"" 2>/dev/null || true
@@ -215,12 +215,12 @@ main() {
     send_notification "$message" "$sound" "$notification" "$sound_enabled"
 
     # 输出到 stdout
-    local log_msg="[$TIMESTAMP] $(get_emoji $STAGE) [$STAGE] $message"
+    local log_msg="[$TIMESTAMP] $(get_emoji "$STAGE") [$STAGE] $message"
     echo "$log_msg"
 
     # 写入日志文件
     if [[ "$log_enabled" == "true" ]] && [[ -n "$log_file" ]]; then
-        write_log "$(get_emoji $STAGE) [$STAGE] $message"
+        write_log "$(get_emoji "$STAGE") [$STAGE] $message"
     fi
 }
 
