@@ -19,6 +19,12 @@
       "source": "./plugins/hugo",
       "category": "content",
       "description": "Publish content to Hugo blog. Use when user invokes /hugo command to create new blog posts."
+    },
+    {
+      "name": "wendao",
+      "source": "./plugins/wendao",
+      "category": "skills",
+      "description": "四层深度追问体系（道・法・术・行）。用于扩充认知、结构化提问、跨领域知识迁移。当用户需要：深入理解某事物本质、从特例提炼通用规律、进行类比推理、系统化梳理知识时使用。"
     }
   ]
 }
