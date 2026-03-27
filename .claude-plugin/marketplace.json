@@ -2,7 +2,7 @@
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "taevas-plugins",
   "version": "0.1.0",
-  "description": "Taevas Plugins Marketplace - Sound notification hooks for Claude Code.",
+  "description": "Taevas Plugins Marketplace - Collection of plugins for Claude Code including blackbox observability guide and wendao deep inquiry system.",
   "owner": {
     "name": "743v45",
     "email": "noreply@743v45.com"
@@ -25,6 +25,12 @@
       "source": "./plugins/wendao",
       "category": "skills",
       "description": "四层深度追问体系（道・法・术・行）。用于扩充认知、结构化提问、跨领域知识迁移。当用户需要：深入理解某事物本质、从特例提炼通用规律、进行类比推理、系统化梳理知识时使用。"
+    },
+    {
+      "name": "blackbox",
+      "source": "./plugins/blackbox",
+      "category": "observability",
+      "description": "记录理念设计指南。帮助理解「记什么、怎么记」，指导埋点方案设计，可通过 OpenTelemetry/日志/APM 工具/自定义等多种方式实现。"
     }
   ]
 }

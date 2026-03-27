@@ -11,6 +11,8 @@ Claude Code 插件集合。
 |------|------|------|
 | **sound-hooks** | 任务事件声音通知 | [plugins/sound-hooks](plugins/sound-hooks) |
 | **hugo** | Hugo 博客文章发布 | [plugins/hugo](plugins/hugo) |
+| **blackbox** | 记录理念设计指南 | [plugins/blackbox](plugins/blackbox) |
+| **wendao** | 四层深度追问体系 | [plugins/wendao](plugins/wendao) |
 
 ## 快速开始
 

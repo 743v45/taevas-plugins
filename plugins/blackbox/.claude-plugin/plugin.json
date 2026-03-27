@@ -1,0 +1,8 @@
+{
+  "name": "blackbox",
+  "description": "记录理念设计指南。帮助理解「记什么、怎么记」，指导埋点方案设计，可通过 OpenTelemetry/日志/APM 工具/自定义等多种方式实现。",
+  "author": {
+    "name": "743v45",
+    "email": "noreply@743v45.com"
+  }
+}
