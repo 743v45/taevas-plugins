@@ -332,13 +332,3 @@ class TimeBasedBlackbox {
   }
 }
 ```
-
----
-
-## 相关文档
-
-- **[philosophy.md](philosophy.md)** - 黑匣子设计哲学
-- **[principles.md](principles.md)** - 通用记录原则
-- **[operations.md](operations.md)** - 操作方法
-- **[SKILL.md](SKILL.md)** - 使用指南
-- **[../feature-flag/SKILL.md](../feature-flag/SKILL.md)** - Feature Flag 模式

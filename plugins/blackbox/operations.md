@@ -295,19 +295,19 @@ blackbox.setRetention(7 * 24 * 60 * 60 * 1000);  // 7天
 ### 标记格式
 
 ```typescript
-// 📦 [黑匣子] <类型> <说明>
+// 📦 [BB] <类型> <说明>
 ```
 
 ### 类型分类
 
 | 标记 | 类型 | 说明 |
 |-----|------|------|
-| `📦 [黑匣子] 性能` | 性能埋点 | 记录操作耗时 |
-| `📦 [黑匣子] 网络` | 网络埋点 | 记录请求/响应 |
-| `📦 [黑匣子] 资源` | 资源埋点 | 记录内存/CPU |
-| `📦 [黑匣子] 错误` | 错误埋点 | 记录异常信息 |
-| `📦 [黑匣子] 状态` | 状态埋点 | 记录页面状态 |
-| `📦 [黑匣子] 快照` | 快照埋点 | 保存现场数据 |
+| `📦 [BB] 性能` | 性能埋点 | 记录操作耗时 |
+| `📦 [BB] 网络` | 网络埋点 | 记录请求/响应 |
+| `📦 [BB] 资源` | 资源埋点 | 记录内存/CPU |
+| `📦 [BB] 错误` | 错误埋点 | 记录异常信息 |
+| `📦 [BB] 状态` | 状态埋点 | 记录页面状态 |
+| `📦 [BB] 快照` | 快照埋点 | 保存现场数据 |
 
 ### 搜索命令
 
@@ -333,7 +333,7 @@ grep -v "📦 \[黑匣子\]" src/file.ts
 // ✅ 正确：使用 Feature Flag 控制
 // blackboxEnabled 由 Feature Flag 模式提供
 if (blackboxEnabled) {
-  // 📦 [黑匣子] 性能 - 记录登录操作耗时
+  // 📦 [BB] 性能 - 记录登录操作耗时
   blackbox.record('performance', {
     operation: 'login',
     start: startTime,
@@ -356,7 +356,7 @@ if (blackboxEnabled) {
 
 // 所有后续记录自动带上上下文
 if (blackboxEnabled) {
-  // 📦 [黑匣子] 网络 - 记录请求
+  // 📦 [BB] 网络 - 记录请求
   blackbox.record('network', {
     url: request.url,
     method: request.method,
@@ -373,7 +373,7 @@ try {
   await operation();
 } catch (error) {
   if (blackboxEnabled) {
-    // 📦 [黑匣子] 错误 - 记录错误上下文
+    // 📦 [BB] 错误 - 记录错误上下文
     blackbox.record('error', {
       message: error.message,
       stack: error.stack,
@@ -394,7 +394,7 @@ try {
 
 添加记录时，检查：
 
-- [ ] 是否有 `// 📦 [黑匣子]` 标记？
+- [ ] 是否有 `// 📦 [BB]` 标记？
 - [ ] 标记类型是否正确（性能/网络/资源/错误/状态/快照）？
 - [ ] 是否有 Feature Flag 控制（如 `if (blackboxEnabled)`）？
 - [ ] 是否包含时间戳？

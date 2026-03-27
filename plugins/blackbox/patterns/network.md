@@ -36,7 +36,7 @@ class NetworkInterceptor {
   private recordRequest(request: Request) {
     // blackboxEnabled 由 Feature Flag 模式提供
     if (blackboxEnabled) {
-      // 📦 [黑匣子] 网络 - 记录请求
+      // 📦 [BB] 网络 - 记录请求
       blackbox.record('network-request', {
         id: request.id(),
         url: request.url(),
@@ -54,7 +54,7 @@ class NetworkInterceptor {
     if (blackboxEnabled) {
       const body = await this.safeGetBody(response);
 
-      // 📦 [黑匣子] 网络 - 记录响应
+      // 📦 [BB] 网络 - 记录响应
       blackbox.record('network-response', {
         id: response.request().id(),
         url: response.url(),
@@ -97,7 +97,7 @@ if (blackboxEnabled) {
 ### 2. 遵循隔离原则
 
 ```typescript
-// 📦 [黑匣子] 网络 - 记录请求
+// 📦 [BB] 网络 - 记录请求
 if (process.env.BLACKBOX_ENABLED) {
   blackbox.record('network-request', { ... });
 }
@@ -142,7 +142,7 @@ private async safeGetBody(response: Response): Promise<string | null> {
 
 ```typescript
 async setupNetworkMonitoring(page: Page) {
-  // 📦 [黑匣子] 网络 - 设置请求拦截
+  // 📦 [BB] 网络 - 设置请求拦截
   page.on('request', (request) => {
     if (process.env.BLACKBOX_ENABLED) {
       blackbox.record('network-request', {
@@ -157,7 +157,7 @@ async setupNetworkMonitoring(page: Page) {
     }
   });
 
-  // 📦 [黑匣子] 网络 - 设置响应拦截
+  // 📦 [BB] 网络 - 设置响应拦截
   page.on('response', async (response) => {
     if (process.env.BLACKBOX_ENABLED) {
       const body = await response.text().catch(() => null);
@@ -185,7 +185,7 @@ function setupFetchInterceptor() {
     const url = args[0]?.toString() || '';
     const options = args[1] || {};
 
-    // 📦 [黑匣子] 网络 - 记录 fetch 请求
+    // 📦 [BB] 网络 - 记录 fetch 请求
     if (process.env.BLACKBOX_ENABLED) {
       blackbox.record('fetch-request', {
         url,
@@ -198,7 +198,7 @@ function setupFetchInterceptor() {
 
     const response = await originalFetch.apply(this, args);
 
-    // 📦 [黑匣子] 网络 - 记录 fetch 响应
+    // 📦 [BB] 网络 - 记录 fetch 响应
     if (process.env.BLACKBOX_ENABLED) {
       const body = await response.clone().text().catch(() => null);
       blackbox.record('fetch-response', {
@@ -223,7 +223,7 @@ function setupAxiosInterceptors(axiosInstance) {
   axiosInstance.interceptors.request.use(
     (config) => {
       if (process.env.BLACKBOX_ENABLED) {
-        // 📦 [黑匣子] 网络 - 记录 axios 请求
+        // 📦 [BB] 网络 - 记录 axios 请求
         blackbox.record('axios-request', {
           url: config.url,
           method: config.method,
@@ -236,7 +236,7 @@ function setupAxiosInterceptors(axiosInstance) {
     },
     (error) => {
       if (process.env.BLACKBOX_ENABLED) {
-        // 📦 [黑匣子] 错误 - 记录请求失败
+        // 📦 [BB] 错误 - 记录请求失败
         blackbox.record('axios-request-error', {
           message: error.message,
           config: error.config,
@@ -251,7 +251,7 @@ function setupAxiosInterceptors(axiosInstance) {
   axiosInstance.interceptors.response.use(
     (response) => {
       if (process.env.BLACKBOX_ENABLED) {
-        // 📦 [黑匣子] 网络 - 记录 axios 响应
+        // 📦 [BB] 网络 - 记录 axios 响应
         blackbox.record('axios-response', {
           url: response.config.url,
           status: response.status,
@@ -264,7 +264,7 @@ function setupAxiosInterceptors(axiosInstance) {
     },
     (error) => {
       if (process.env.BLACKBOX_ENABLED) {
-        // 📦 [黑匣子] 错误 - 记录响应失败
+        // 📦 [BB] 错误 - 记录响应失败
         blackbox.record('axios-response-error', {
           message: error.message,
           status: error.response?.status,

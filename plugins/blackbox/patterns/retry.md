@@ -54,7 +54,7 @@ async function retryOperation<T>(
       // 计算退避时间
       const backoff = Math.min(delayMs * Math.pow(2, attempt), maxDelayMs);
 
-      // 📦 [黑匣子] 错误 - 记录重试
+      // 📦 [BB] 错误 - 记录重试
       // blackboxEnabled 由 Feature Flag 模式提供
       if (blackboxEnabled) {
         blackbox.record('retry', {
@@ -92,7 +92,7 @@ if (blackboxEnabled) {
 ### 2. 遵循隔离原则
 
 ```typescript
-// 📦 [黑匣子] 错误 - 记录重试
+// 📦 [BB] 错误 - 记录重试
 if (process.env.BLACKBOX_ENABLED) {
   blackbox.record('retry', { ... });
 }
@@ -128,7 +128,7 @@ await retryOperation(
   }
 );
 
-// 📦 [黑匣子] 错误 - 记录重试（在 retryOperation 内部）
+// 📦 [BB] 错误 - 记录重试（在 retryOperation 内部）
 ```
 
 ### 带重试条件模板
@@ -156,7 +156,7 @@ await retryOperation(
   {
     maxRetries: 3,
     onRetry: (attempt, error) => {
-      // 📦 [黑匣子] 错误 - 记录重试（也可以在回调中记录）
+      // 📦 [BB] 错误 - 记录重试（也可以在回调中记录）
       if (process.env.BLACKBOX_ENABLED) {
         blackbox.record('retry', {
           attempt,
@@ -340,7 +340,7 @@ class CircuitBreaker {
     if (this.failures >= this.threshold) {
       this.state = 'open';
 
-      // 📦 [黑匣子] 错误 - 记录熔断
+      // 📦 [BB] 错误 - 记录熔断
       if (process.env.BLACKBOX_ENABLED) {
         blackbox.record('circuit-breaker', {
           state: this.state,
@@ -384,7 +384,7 @@ class RetryTracker {
 
     stats.attempts++;
 
-    // 📦 [黑匣子] 错误 - 记录重试统计
+    // 📦 [BB] 错误 - 记录重试统计
     if (process.env.BLACKBOX_ENABLED) {
       blackbox.record('retry-stats', {
         operation,

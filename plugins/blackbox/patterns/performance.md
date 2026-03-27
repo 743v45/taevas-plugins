@@ -75,7 +75,7 @@ if (blackboxEnabled) {
 ### 2. 遵循隔离原则
 
 ```typescript
-// 📦 [黑匣子] 性能 - 记录登录操作耗时
+// 📦 [BB] 性能 - 记录登录操作耗时
 if (process.env.BLACKBOX_ENABLED) {
   perfTracker.start('login');
 }
@@ -105,7 +105,7 @@ if (process.env.BLACKBOX_ENABLED) {
 
 ```typescript
 async login() {
-  // 📦 [黑匣子] 性能 - 记录登录操作耗时
+  // 📦 [BB] 性能 - 记录登录操作耗时
   if (process.env.BLACKBOX_ENABLED) {
     perfTracker.start('login');
   }
@@ -125,7 +125,7 @@ async login() {
 
 ```typescript
 async chat(prompt: string) {
-  // 📦 [黑匣子] 性能 - 记录聊天操作耗时
+  // 📦 [BB] 性能 - 记录聊天操作耗时
   if (process.env.BLACKBOX_ENABLED) {
     perfTracker.start('chat', { promptLength: prompt.length });
   }
