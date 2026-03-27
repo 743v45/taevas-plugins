@@ -1,6 +1,7 @@
 ---
 name: blackbox
-description: 记录理念设计指南。帮助你理解"记什么、怎么记"，指导埋点方案设计，可通过 OpenTelemetry/日志/自定义等多种方式实现。
+description: 记录理念设计指南。帮助理解"记什么、怎么记"，指导埋点方案设计，可通过 OpenTelemetry/日志/自定义等多种方式实现。
+argument-hint: "[场景/组件]"
 ---
 
 # 黑匣子 (BlackBox)
